@@ -142,63 +142,92 @@ export default function MarsMap({
     };
   }, [zone.id]);
 
-  // 2. Update Base Tile Layer with Seamless Web Mercator Planetary Tiles & Error Fallbacks
+  // 2. Update Base Tile Layer — multi-source strategy for maximum sharpness at all zoom levels
+  //    Low zoom  (z≤7):  Google Mars quadkey tiles (global color/elevation coverage)
+  //    High zoom (z≥8):  ESRI ArcGIS Online CTX Mosaic (6m/pixel, z6–z12 verified working)
+  //    THEMIS: Google IR for color context (z≤7) + CTX for high-res detail (z≥8)
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
 
+    // Remove old base layers
     if (layersGroupRef.current.baseTile) {
       map.removeLayer(layersGroupRef.current.baseTile);
     }
+    if (layersGroupRef.current.baseTileHiRes) {
+      map.removeLayer(layersGroupRef.current.baseTileHiRes);
+    }
 
-    let tileLayer;
+    // ── ESRI ArcGIS CTX high-res layer (z6–z12, ~6m/pixel, NASA MRO CTX camera)
+    // Works perfectly for all 3 basemap modes as a crisp high-zoom layer
+    const ctxHiRes = L.tileLayer(
+      'https://astro.arcgis.com/arcgis/rest/services/OnMars/CTX/MapServer/tile/{z}/{y}/{x}',
+      {
+        maxZoom: 14,
+        maxNativeZoom: 12,
+        minZoom: 6,
+        opacity: 1,
+        attribution: 'NASA/MRO CTX Mosaic via ESRI ArcGIS'
+      }
+    );
 
     if (baseMap === 'mola') {
-      // Google Mars MOLA Elevation (Seamless Worldwide Coverage without black squares)
+      // MOLA Elevation: Google quadkey for global color (z≤7), CTX for crisp high-res (z≥8)
       const QuadElevationLayer = L.TileLayer.extend({
         getTileUrl: function(coords) {
           const qk = toQuadKey(coords.x, coords.y, coords.z);
           return `https://mw1.google.com/mw-planetary/mars/elevation/${qk}.jpg`;
         }
       });
-      tileLayer = new QuadElevationLayer('', {
+      const baseLow = new QuadElevationLayer('', {
         maxZoom: 14,
-        maxNativeZoom: 8,
+        maxNativeZoom: 7,
         errorTileUrl: 'https://mw1.google.com/mw-planetary/mars/elevation/t.jpg',
         attribution: 'NASA/GSFC MOLA Elevation'
       });
+      baseLow.addTo(map);
+      ctxHiRes.addTo(map);
+      layersGroupRef.current.baseTile = baseLow;
+      layersGroupRef.current.baseTileHiRes = ctxHiRes;
+
     } else if (baseMap === 'viking') {
-      // Google Mars Viking True Color Mosaic
+      // Viking Color Mosaic: Google quadkey for color (z≤7), CTX detail on top (z≥8)
       const QuadVikingLayer = L.TileLayer.extend({
         getTileUrl: function(coords) {
           const qk = toQuadKey(coords.x, coords.y, coords.z);
           return `https://mw1.google.com/mw-planetary/mars/visible/${qk}.jpg`;
         }
       });
-      tileLayer = new QuadVikingLayer('', {
+      const baseLow = new QuadVikingLayer('', {
         maxZoom: 14,
-        maxNativeZoom: 8,
+        maxNativeZoom: 7,
         errorTileUrl: 'https://mw1.google.com/mw-planetary/mars/visible/t.jpg',
         attribution: 'NASA/USGS Viking Color Mosaic'
       });
+      baseLow.addTo(map);
+      ctxHiRes.addTo(map);
+      layersGroupRef.current.baseTile = baseLow;
+      layersGroupRef.current.baseTileHiRes = ctxHiRes;
+
     } else if (baseMap === 'themis') {
-      // Google Mars / THEMIS Infrared Thermal
+      // THEMIS IR: Google IR for thermal color context (z≤7), CTX for crisp detail (z≥8)
       const QuadThemisLayer = L.TileLayer.extend({
         getTileUrl: function(coords) {
           const qk = toQuadKey(coords.x, coords.y, coords.z);
           return `https://mw1.google.com/mw-planetary/mars/infrared/${qk}.jpg`;
         }
       });
-      tileLayer = new QuadThemisLayer('', {
+      const baseLow = new QuadThemisLayer('', {
         maxZoom: 14,
-        maxNativeZoom: 8,
+        maxNativeZoom: 7,
         errorTileUrl: 'https://mw1.google.com/mw-planetary/mars/infrared/t.jpg',
         attribution: 'NASA/ASU THEMIS Infrared'
       });
+      baseLow.addTo(map);
+      ctxHiRes.addTo(map);
+      layersGroupRef.current.baseTile = baseLow;
+      layersGroupRef.current.baseTileHiRes = ctxHiRes;
     }
-
-    tileLayer.addTo(map);
-    layersGroupRef.current.baseTile = tileLayer;
   }, [baseMap]);
 
   // 3. Render Scientific Overlays (Slope Hazards, Minerals, Thermal Sand Traps)
