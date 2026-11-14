@@ -1,237 +1,293 @@
-// NASA Mars Missions & Scientific Datasets
+// NASA Mars Missions & Scientific Datasets with Bilingual (EN / UZ) Support
 // Curated from NASA JPL Mars Trek, USGS Astrogeology, MGS MOLA, MRO HiRISE/CRISM, Curiosity (MSL) & Perseverance (Mars 2020)
 
 export const MARS_EXPLORATION_ZONES = {
   gale: {
     id: 'gale',
     name: 'Gale Crater / Mount Sharp',
+    name_uz: 'Gale Krateri / Mount Sharp',
     subtitle: 'Curiosity Rover Exploration Zone & Boxwork Formations',
+    subtitle_uz: 'Curiosity Roveri Hududi va Boxwork Formatsiyalari',
     center: [-4.65, 137.4],
     zoom: 11,
     landingSite: 'Bradbury Landing (-4.5895°, 137.4417°)',
     rover: 'Curiosity (MSL)',
     solActive: 5073,
     description: 'An ancient 154 km impact basin hosting Mount Sharp (Aeolis Mons), rising 5.5 km above the crater floor. Famous for layered sedimentary rocks, smectite clays, sulfate salts, and newly discovered boxwork honeycomb mineral networks formed by ancient groundwater.',
+    description_uz: 'Krater tubidan 5.5 km balandlikka ko\'tarilgan Mount Sharp (Aeolis Mons) tog\'iga ega 154 km li qadimiy zarba havzasi. Qatlamli cho\'kindi jinslar, smektit gillari, sulfat tuzlari va qadimgi yerosti suvlari hosil qilgan asalari uyasimon boxwork tizmalari bilan mashhur.',
     elevationSpan: '-4,500m to -1,200m',
     primaryScience: 'Habitability transition from ancient wet freshwater lake to hyper-arid sulfate environment; Boxwork mineral vein genesis.',
-    baseTiles: 'https://trek.nasa.gov/tiles/Mars/EQ/Mars_MGS_MOLA_ClrShade_merge_global_463m/1.0.0/default/default028mm/{z}/{y}/{x}.jpg',
+    primaryScience_uz: 'Qadimgi chuchuk suvli ko\'ldan qurg\'oqchil sulfat muhitiga o\'tish evolyutsiyasi; Boxwork mineral tomirlari genezisi.',
     defaultMissionId: 'mission_boxwork',
     waypoints: [
       {
         id: 'gw-1',
         name: 'Camp Alpha (Bradbury Base)',
+        name_uz: 'Alpha Lageri (Bradbury Bazasi)',
         lat: -4.5895,
         lng: 137.4417,
         elevation: -4450,
         type: 'base',
         hazard: 'Low',
+        hazard_uz: 'Xavfsiz',
         slopeDeg: 2.1,
         mineralogy: 'Basaltic Regolith',
+        mineralogy_uz: 'Bazalt Regoliti',
         scienceGoal: 'Deploy pressurized crew habitat & initialize telemetry link with MRO orbiter relay.',
+        scienceGoal_uz: 'Germetik ekipaj modulini o\'rnatish va MRO orbital retranslyatori bilan aloqa o\'rnatish.',
         notes: 'Landing ellipse nominal flat alluvial plain. Minimal obstacle density.',
+        notes_uz: 'Qo\'nish ellipsi tekis allyuvial tekislik. To\'siqlar minimal.',
         sampleTarget: null,
         img: 'https://mars.nasa.gov/msl-raw-images/proj/msl/redops/ods/surface/sol/00002/soas/fdr/fcam/FLB_397681429EDR_F0010008AUT_04095M_.JPG'
       },
       {
         id: 'gw-2',
         name: 'Yellowknife Bay Mudstone Outcrop',
+        name_uz: 'Yellowknife Bay Gil Qatlami',
         lat: -4.6210,
         lng: 137.4280,
         elevation: -4495,
         type: 'science',
         hazard: 'Low',
+        hazard_uz: 'Xavfsiz',
         slopeDeg: 4.5,
         mineralogy: 'Phyllosilicates (Smectite Clays), Magnetite, Gypsum Veins',
+        mineralogy_uz: 'Fillosilikatlar (Smektit Gillari), Magnetit, Gips',
         scienceGoal: 'Percussive drill sample to test for ancient neutral pH lakebed habitability biomarkers.',
+        scienceGoal_uz: 'Qadimgi neytral pH ko\'l tubida hayotiy biomarkerlarni tekshirish uchun burg\'ulash namunasi.',
         notes: 'Fine-grained mudstone sediments deposited in ancient tranquil lake.',
+        notes_uz: 'Qadimiy sokin ko\'l tubida to\'plangan nozik dispersli gil cho\'kindilari.',
         sampleTarget: 'Sample Tube G-01: John Klein Core',
+        sampleTarget_uz: 'Namuna Naychasi G-01: John Klein Kerni',
         img: 'https://mars.nasa.gov/msl-raw-images/mosaics/sol130/mastcam/PIA16834_YellowknifeBay_fig1_browse.jpg'
       },
       {
         id: 'gw-3',
         name: 'Bagnold Dune Field Bypass',
+        name_uz: 'Bagnold Qum Barxanlari Aylanmasi',
         lat: -4.6850,
         lng: 137.3950,
         elevation: -4310,
         type: 'hazard',
         hazard: 'Extreme (Sand Trap)',
+        hazard_uz: 'O\'ta Xavfli (Qum Tuzog\'i)',
         slopeDeg: 14.8,
         thermalInertia: 'Low (Loose Fine Sand)',
+        mineralogy: 'Loose Basaltic Sand',
+        mineralogy_uz: 'Yumshoq Bazalt Qumi',
         scienceGoal: 'Atmospheric boundary layer aeolian transport measurements; avoid driving rover onto dune crests.',
+        scienceGoal_uz: 'Shamol orqali qum ko\'chishini o\'lchash; barxan tepasiga chiqishdan qat\'iy saqlanish.',
         notes: 'Active barchanoid basaltic dunes. Wheel slip exceeds 60%. Walking requires snowshoe-style regolith cleats.',
+        notes_uz: 'Faol barxanlar. G\'ildirak sirpanishi 60% dan ortiq. Maxsus botinka tirnoqlari zarur.',
         sampleTarget: null,
         img: 'https://mars.nasa.gov/msl-raw-images/proj/msl/redops/ods/surface/sol/01174/soas/fdr/fcam/FLB_502096738EDR_F0511116FHAZ00304M_.JPG'
       },
       {
         id: 'gw-4',
         name: 'Vera Rubin Ridge (Hematite Crest)',
+        name_uz: 'Vera Rubin Tizmasi (Gematit Qoyalari)',
         lat: -4.7290,
         lng: 137.3820,
         elevation: -4180,
         type: 'science',
         hazard: 'Medium (Steep Slope)',
+        hazard_uz: 'O\'rta (Tik Qiyalik)',
         slopeDeg: 19.2,
         mineralogy: 'Crystalline Gray Hematite, Iron Oxides, Jarosite',
+        mineralogy_uz: 'Kristall Kulrang Gematit, Temir Oksidlari, Yarozit',
         scienceGoal: 'Raman and APXS spectral interrogation of groundwater oxidation-reduction interface.',
+        scienceGoal_uz: 'Yerosti suvlari oksidlanish-qaytarilish chegarasini Raman va APXS spektrometri bilan tekshirish.',
         notes: 'Erosion-resistant bedrock bench. Requires hand-hold ascent and tether lines.',
+        notes_uz: 'Yemirilishga chidamli qattiq qatlam. Ko\'tarilish uchun xavfsizlik arqonlari shart.',
         sampleTarget: 'Sample Tube G-02: Stoer Gray Hematite Core',
+        sampleTarget_uz: 'Namuna Naychasi G-02: Stoer Gematit Kerni',
         img: 'https://mars.nasa.gov/msl-raw-images/proj/msl/redops/ods/surface/sol/01926/soas/fdr/fcam/FLB_568600108EDR_F0672044FHAZ00337M_.JPG'
       },
       {
         id: 'gw-5',
         name: 'Gediz Vallis Debris Flow Channel',
+        name_uz: 'Gediz Vallis Tosh Oqimi Kanyoni',
         lat: -4.7820,
         lng: 137.3550,
         elevation: -3980,
         type: 'waypoint',
         hazard: 'High (Boulder Field)',
+        hazard_uz: 'Yuqori (Ulkan Toshlar)',
         slopeDeg: 16.5,
         mineralogy: 'Polymict Boulders, Magnesium Sulfate, Silica',
+        mineralogy_uz: 'Polimikt Qoyalar, Magniy Sulfat, Kremniy',
         scienceGoal: 'Investigate evidence of late-stage catastrophic liquid water debris flow torrents.',
+        scienceGoal_uz: 'Qadimgi shiddatli sel oqimlari va katastrofik suv toshqinlari izlarini tekshirish.',
         notes: 'Car-sized megablocks of upper Mount Sharp strata washed down canyon.',
+        notes_uz: 'Mount Sharp yuqori qatlamlaridan kanyon bo\'ylab oqib tushgan ulkan xarsangtoshlar.',
         sampleTarget: 'Sample Tube G-03: Gediz Vallis Ridge Conglomerate',
+        sampleTarget_uz: 'Namuna Naychasi G-03: Gediz Vallis Konglomerati',
         img: 'https://mars.nasa.gov/msl-raw-images/proj/msl/redops/ods/surface/sol/03880/soas/fdr/fcam/FLB_742137599EDR_F1020000FHAZ00304M_.JPG'
       },
       {
         id: 'gw-6',
         name: 'Mount Sharp Boxwork Ridge Formations',
+        name_uz: 'Mount Sharp Boxwork Asalari Tizmalari',
         lat: -4.8350,
         lng: 137.3200,
         elevation: -3750,
         type: 'primary-objective',
         hazard: 'Medium (Knife-edge Ridges)',
+        hazard_uz: 'O\'rta (O\'tkir Tizma Qirralari)',
         slopeDeg: 12.0,
         mineralogy: 'Polygonal Sulfate Vein Networks, Silicified Quartz, Calcite',
+        mineralogy_uz: 'Ko\'pburchakli Sulfat Tomir To\'rlari, Kvars, Kaltsit',
         scienceGoal: 'PRIMARY MISSION OBJECTIVE: Map and collect pristine fracture-fill boxwork ridges created by pressurized mineralizing hydrothermal fluids during late Mars climate drying.',
+        scienceGoal_uz: 'ASOSIY ILMIY MAQSAD: Qadimgi Mars iqlimi qurib borayotgan davrda hosil bo\'lgan yoriqlarni to\'ldiruvchi gips va sulfat boxwork tizmalaridan birlamchi namuna olish.',
         notes: 'Distinct honeycomb ridge networks spanning kilometers across sulfate-bearing strata. Never before sampled by humans.',
+        notes_uz: 'Sulfat qatlamlari bo\'ylab o\'nlab kilometrga cho\'zilgan asalari uyasimon tizmalar. Inson tomonidan ilk bor o\'rganilmoqda.',
         sampleTarget: 'Sample Tube G-04: Boxwork Vein Matrix Core (Priority 1)',
+        sampleTarget_uz: 'Namuna Naychasi G-04: Boxwork Tomiri Kerni (1-Darajali)',
         img: 'https://science.nasa.gov/wp-content/uploads/2024/09/boxwork-pia26388.jpg'
       }
     ],
     geologicalUnits: [
-      { name: 'Yellowknife Mudstone', color: '#38bdf8', type: 'Smectite Clay' },
-      { name: 'Murray Laminated Mudstone', color: '#818cf8', type: 'Lacustrine' },
-      { name: 'Vera Rubin Ridge', color: '#f87171', type: 'Hematite Oxide' },
-      { name: 'Glen Torridon Trough', color: '#34d399', type: 'Hydrated Phyllosilicates' },
-      { name: 'Mirador Sandstone', color: '#fbbf24', type: 'Eolian Crossbedding' },
-      { name: 'Sulfate Unit / Gediz Vallis', color: '#fb923c', type: 'Magnesium Sulfates' },
-      { name: 'Boxwork Polygonal Ridges', color: '#e879f9', type: 'Hydrothermal Fracture Fills' }
+      { name: 'Yellowknife Mudstone', name_uz: 'Yellowknife Gil Qatlami', color: '#38bdf8', type: 'Smectite Clay' },
+      { name: 'Murray Laminated Mudstone', name_uz: 'Murray Cho\'kindi Jinslari', color: '#818cf8', type: 'Lacustrine' },
+      { name: 'Vera Rubin Ridge', name_uz: 'Vera Rubin Tizmasi', color: '#f87171', type: 'Hematite Oxide' },
+      { name: 'Glen Torridon Trough', name_uz: 'Glen Torridon Botiqligi', color: '#34d399', type: 'Hydrated Phyllosilicates' },
+      { name: 'Mirador Sandstone', name_uz: 'Mirador Qumtoshi', color: '#fbbf24', type: 'Eolian Crossbedding' },
+      { name: 'Sulfate Unit / Gediz Vallis', name_uz: 'Sulfatli Qatlam / Gediz Vallis', color: '#fb923c', type: 'Magnesium Sulfates' },
+      { name: 'Boxwork Polygonal Ridges', name_uz: 'Boxwork Ko\'pburchakli Tizmalari', color: '#e879f9', type: 'Hydrothermal Fracture Fills' }
     ]
   },
   
   jezero: {
     id: 'jezero',
     name: 'Jezero Crater & River Delta',
+    name_uz: 'Jezero Krateri va Daryo Deltasi',
     subtitle: 'Perseverance Rover & Sample Return Exploration Zone',
+    subtitle_uz: 'Perseverance Roveri va Namuna To\'plash Hududi',
     center: [18.42, 77.48],
     zoom: 11,
     landingSite: 'Octavia E. Butler Landing (18.4447° N, 77.4508° E)',
     rover: 'Perseverance (Mars 2020)',
     solActive: 2031,
     description: 'A 45 km diameter paleolake basin in Isidis Planitia. Ancient rivers breached the crater rim, depositing an exquisite preserved delta fan rich in clays, carbonates, and silica with exceptional biosignature preservation capability.',
+    description_uz: 'Isidis Planitia hududidagi 45 km diametrli qadimgi ko\'l havzasi. Qadimiy daryolar krater devorini yorib o\'tib, gil, karbonat va kremniyga boy daryo deltasini hosil qilgan.',
     elevationSpan: '-2,550m to -2,100m',
     primaryScience: 'Search for biosignatures in deltaic river mudstones and carbonate margin units; collect sealed sample tubes for return to Earth.',
-    baseTiles: 'https://trek.nasa.gov/tiles/Mars/EQ/Mars_MGS_MOLA_ClrShade_merge_global_463m/1.0.0/default/default028mm/{z}/{y}/{x}.jpg',
+    primaryScience_uz: 'Daryo deltasi loyqalarida va karbonatli sohillarda qadimgi mikroorganizmlar izlarini (biosignatures) qidirish hamda Yerga qaytarish uchun naychalarga muhrlash.',
     defaultMissionId: 'mission_jezero_delta',
     waypoints: [
       {
         id: 'jw-1',
         name: 'Camp Butler (Octavia E. Butler Base)',
+        name_uz: 'Butler Lageri (Octavia E. Butler Bazasi)',
         lat: 18.4447,
         lng: 77.4508,
         elevation: -2540,
         type: 'base',
         hazard: 'Low',
+        hazard_uz: 'Xavfsiz',
         slopeDeg: 1.8,
         mineralogy: 'Pyroxene & Olivine-bearing Crater Floor Bedrock',
+        mineralogy_uz: 'Piroksen va Olivinli Magmatik Qatlam',
         scienceGoal: 'Commission base life support systems, check pressurized rover battery bank.',
+        scienceGoal_uz: 'Baza hayot ta\'minoti tizimini ishga tushirish, rover batareyalarini sinovdan o\'tkazish.',
         notes: 'Smooth, level igneous crater floor units. Excellent landing touchdown telemetry.',
+        notes_uz: 'Tekis va xavfsiz magmatik jinslar. Qo\'nish uchun ideal maydon.',
         sampleTarget: null,
         img: 'https://mars.nasa.gov/mars2020-raw-images/pub/ods/surface/sol/00003/ids/edr/browse/fcam/FLF_0003_0667087570_000ECM_N0010052AUT_04095_00_1J01.png'
       },
       {
         id: 'jw-2',
         name: 'Séítah South Sand Traverse',
+        name_uz: 'Janubiy Séítah Qumli Marshruti',
         lat: 18.4230,
         lng: 77.4350,
         elevation: -2560,
         type: 'hazard',
         hazard: 'Extreme (Deep Sand / Dune Crests)',
+        hazard_uz: 'O\'ta Xavfli (Qalin Qum Barxanlari)',
         slopeDeg: 16.2,
         mineralogy: 'Olivine Cumulate Sand',
+        mineralogy_uz: 'Olivinli Kumulyativ Qum',
         scienceGoal: 'Skirt hazardous dunes along rocky outcrop ridge; inspect ancient layered igneous intrusion.',
+        scienceGoal_uz: 'Xavfli qum barxanlarini toshli qirra bo\'ylab aylanib o\'tish; qatlamli magmatik jinslarni ko\'zdan kechirish.',
         notes: 'Perseverance auto-navigation previously rerouted around this zone due to slip hazards.',
+        notes_uz: 'Perseverance avtonavigatsiyasi sirpanish xavfi tufayli bu hududni chetlab o\'tgan edi.',
         sampleTarget: null,
         img: 'https://mars.nasa.gov/mars2020-raw-images/pub/ods/surface/sol/00222/ids/edr/browse/zcam/ZL0_0222_0686940809_023ECM_N0010052AUT_04095_00_2J01.png'
       },
       {
         id: 'jw-3',
         name: 'Kodiak Butte (Delta Remnant)',
+        name_uz: 'Kodiak Butte (Qadimgi Delta Qoldig\'i)',
         lat: 18.4090,
         lng: 77.4080,
         elevation: -2480,
         type: 'waypoint',
         hazard: 'Medium (Rockfall Risk)',
+        hazard_uz: 'O\'rta (Tosh Ko\'chishi Xavfi)',
         slopeDeg: 18.5,
         mineralogy: 'Deltaic Bottomset and Foreset Sediments',
+        mineralogy_uz: 'Delta Ostki va Qiyalik Cho\'kindilari',
         scienceGoal: 'Long-range telephoto imaging of delta layering geometry to determine ancient river lake level drops.',
+        scienceGoal_uz: 'Daryoning qadimgi oqim sathini o\'rganish uchun Kodiak qatlamlarini telefoto kamerada suratga olish.',
         notes: 'Isolated mesa proving the ancient river delta once extended far across the crater floor.',
+        notes_uz: 'Qadimgi daryo deltasining krater tubigacha cho\'zilganini isbotlovchi alohida turgan qoya.',
         sampleTarget: 'Sample Tube J-01: Kodiak Foreset Sandstone',
+        sampleTarget_uz: 'Namuna Naychasi J-01: Kodiak Qumtoshi',
         img: 'https://mars.nasa.gov/mars2020-raw-images/pub/ods/surface/sol/00078/ids/edr/browse/mcam/ML0_0078_0673753303_193ECM_N0010052AUT_04095_00_2J01.png'
       },
       {
         id: 'jw-4',
         name: 'Hawksbill Gap Delta Front Scarp',
+        name_uz: 'Hawksbill Gap Delta Qoyasi',
         lat: 18.4550,
         lng: 77.3910,
         elevation: -2430,
         type: 'science',
         hazard: 'Medium (Climbing Incline)',
+        hazard_uz: 'O\'rta (Tik Ko\'tarilish)',
         slopeDeg: 13.5,
         mineralogy: 'Organic-rich Mudstone, Clay, Fe-Oxides',
+        mineralogy_uz: 'Organikaga Boy Gil, Temir Oksidlari',
         scienceGoal: 'Abrade surface rock with diamond bit; inspect with SHERLOC UV Raman fluorescence for aromatic organic carbon rings.',
+        scienceGoal_uz: 'Tosh yuzasini qirib, SHERLOC ultrabinafsha Raman spektrometrida organik uglerod halqalarini qidirish.',
         notes: 'Prime location for concentrated organics deposited where muddy river slowed entering lake.',
+        notes_uz: 'Daryo ko\'lga quyilishida organik birikmalar eng ko\'p to\'plangan muhim nuqta.',
         sampleTarget: 'Sample Tube J-02: Wildcat Ridge Mudstone (High Organic Detection)',
+        sampleTarget_uz: 'Namuna Naychasi J-02: Wildcat Ridge Organik Gili',
         img: 'https://mars.nasa.gov/mars2020-raw-images/pub/ods/surface/sol/00525/ids/edr/browse/zcam/ZR0_0525_0713783457_012ECM_N0010052AUT_04095_00_2J01.png'
       },
       {
         id: 'jw-5',
         name: 'Bright Angel & Margin Unit Carbonates',
+        name_uz: 'Bright Angel va Magniy Karbonatlari',
         lat: 18.5120,
         lng: 77.3480,
         elevation: -2290,
         type: 'primary-objective',
         hazard: 'Low-Medium',
+        hazard_uz: 'Past-O\'rta',
         slopeDeg: 7.2,
         mineralogy: 'Magnesium Carbonates, Vivianite (Iron Phosphate), Silica',
+        mineralogy_uz: 'Magniy Karbonatlari, Vivianit (Temir Fosfati), Kremniy',
         scienceGoal: 'PRIMARY MISSION OBJECTIVE: Sample "Cheyava Falls" rock featuring leopard-skin reduction reaction halos containing iron phosphate and potential biosignature organics.',
+        scienceGoal_uz: 'ASOSIY ILMIY MAQSAD: Qoplon terisiga o\'xshash dog\'lari bo\'lgan "Cheyava Falls" toshidan temir fosfati va qadimgi mikrobial hayot izlarini o\'z ichiga olgan namunani olish.',
         notes: 'Carbonate rocks form a "bathtub ring" around Jezero. Minerals precipitate in alkaline lake water, sealing microbial microfossils.',
+        notes_uz: 'Ishqoriy ko\'l suvidan cho\'kkan karbonatli jinslar qadimgi mikrofosil qoldiqlarini germetik saqlab qolgan.',
         sampleTarget: 'Sample Tube J-03: Cheyava Falls Biosignature Candidate Core',
+        sampleTarget_uz: 'Namuna Naychasi J-03: Cheyava Falls Hayot Izlari Kerni',
         img: 'https://mars.nasa.gov/system/resources/detail_files/28080_PIA26372-web.jpg'
       }
     ],
     geologicalUnits: [
-      { name: 'Crater Floor Igneous (Séítah)', color: '#a78bfa', type: 'Olivine Cumulate' },
-      { name: 'Delta Lower Mudstones', color: '#38bdf8', type: 'Smectite/Clays' },
-      { name: 'Delta Foreset Conglomerates', color: '#fbbf24', type: 'Fluvial Sands' },
-      { name: 'Delta Top Boulder Bed', color: '#fb923c', type: 'Flooding Cobbles' },
-      { name: 'Margin Unit Carbonates', color: '#34d399', type: 'Mg-Carbonates (Bathtub Ring)' }
+      { name: 'Crater Floor Igneous (Séítah)', name_uz: 'Krater Tubi Magmatik Jinslari', color: '#a78bfa', type: 'Olivine Cumulate' },
+      { name: 'Delta Lower Mudstones', name_uz: 'Delta Quyi Gillari', color: '#38bdf8', type: 'Smectite/Clays' },
+      { name: 'Delta Foreset Conglomerates', name_uz: 'Delta Daryo Qumlari', color: '#fbbf24', type: 'Fluvial Sands' },
+      { name: 'Delta Top Boulder Bed', name_uz: 'Delta Yuqori Qoyatoshlari', color: '#fb923c', type: 'Flooding Cobbles' },
+      { name: 'Margin Unit Carbonates', name_uz: 'Sohil Karbonatli Jinslari', color: '#34d399', type: 'Mg-Carbonates (Bathtub Ring)' }
     ]
   }
 };
-
-// Historical NASA Mars Landing Sites Catalog
-export const NASA_HISTORICAL_SITES = [
-  { name: 'Viking 1', year: 1976, lat: 22.27, lng: -47.95, mission: 'First successful Mars lander', status: 'Decommissioned' },
-  { name: 'Viking 2', year: 1976, lat: 47.64, lng: 134.29, mission: 'Utopia Planitia lander', status: 'Decommissioned' },
-  { name: 'Mars Pathfinder / Sojourner', year: 1997, lat: 19.33, lng: -33.55, mission: 'First robotic micro-rover', status: 'Decommissioned' },
-  { name: 'Spirit (MER-A)', year: 2004, lat: -14.5684, lng: 175.4726, mission: 'Gusev Crater explorer', status: 'Decommissioned' },
-  { name: 'Opportunity (MER-B)', year: 2004, lat: -1.9462, lng: -5.5266, mission: 'Meridiani Planum hematite explorer', status: 'Decommissioned' },
-  { name: 'Phoenix Lander', year: 2008, lat: 68.2188, lng: -125.7492, mission: 'Subsurface water ice discovery', status: 'Decommissioned' },
-  { name: 'Curiosity (MSL)', year: 2012, lat: -4.5895, lng: 137.4417, mission: 'Gale Crater & Mount Sharp exploration', status: 'Active (Sol 5070+)' },
-  { name: 'InSight Lander', year: 2018, lat: 4.5024, lng: 135.6234, mission: 'Mars interior seismic & heat flow probe', status: 'Decommissioned' },
-  { name: 'Perseverance & Ingenuity', year: 2021, lat: 18.4447, lng: 77.4508, mission: 'Jezero Delta biosignature sample collection', status: 'Active (Sol 2030+)' }
-];
 
 // Pre-packaged Scientific Expeditions (EVA Missions)
 export const PREPACKAGED_MISSIONS = {
@@ -239,45 +295,54 @@ export const PREPACKAGED_MISSIONS = {
     id: 'mission_boxwork',
     zoneId: 'gale',
     title: 'EVA-01: Mount Sharp Boxwork Ridge & Hydrothermal Survey',
+    title_uz: 'EVA-01: Mount Sharp Boxwork Tizmalari va Gidrotermal Tadqiqot',
     sol: 5074,
     leadExplorer: 'CDR. Sarah Chen & GEOL. Alex Rodriguez',
+    leadExplorer_uz: 'Komandir Sarah Chen va Geolog Alex Rodriguez',
     primaryObjective: 'Traverse lower Mount Sharp to sample polygonal sulfate boxwork networks discovered in 2024-2025.',
-    estimatedDurationMin: 340, // 5.6 hours
+    primaryObjective_uz: '2024-2025 yillarda kashf etilgan ko\'pburchakli sulfat boxwork tizmalaridan namunalar to\'plash.',
+    estimatedDurationMin: 340,
     totalDistanceKm: 8.6,
     ascentMeters: 700,
     descentMeters: 0,
     o2BudgetLiters: 1200,
     targetSamples: 4,
     recommendedSpeedKmH: 1.8,
-    hazardSummary: 'Steep gravel slopes on Vera Rubin Ridge, wheel/boot slip on Bagnold dune margins. UV index severe at midday.'
+    hazardSummary: 'Steep gravel slopes on Vera Rubin Ridge, wheel/boot slip on Bagnold dune margins. UV index severe at midday.',
+    hazardSummary_uz: 'Vera Rubin tizmasidagi tik tosh qiyaliklar, Bagnold qumlarida sirpanish xavfi. Tush vaqtida yuqori ultrabinafsha nurlanish.'
   },
   mission_jezero_delta: {
     id: 'mission_jezero_delta',
     zoneId: 'jezero',
     title: 'EVA-02: Jezero Western Fan Delta & Carbonate Biosignature Loop',
+    title_uz: 'EVA-02: Jezero G\'arbiy Deltasi va Karbonatli Hayot Izlari Marshruti',
     sol: 2032,
     leadExplorer: 'CDR. Sarah Chen & ASTROBIO. Marcus Vance',
+    leadExplorer_uz: 'Komandir Sarah Chen va Astrobiolog Marcus Vance',
     primaryObjective: 'Climb Hawksbill Gap scarp into Bright Angel margin unit to extract core samples from "Cheyava Falls" reduction spots.',
-    estimatedDurationMin: 290, // 4.8 hours
+    primaryObjective_uz: 'Hawksbill Gap qoyasi orqali ko\'tarilib, "Cheyava Falls" toshidagi hayot izlari qoldiqlaridan namunalar olish.',
+    estimatedDurationMin: 290,
     totalDistanceKm: 7.2,
     ascentMeters: 250,
     descentMeters: 20,
     o2BudgetLiters: 1100,
     targetSamples: 3,
     recommendedSpeedKmH: 2.1,
-    hazardSummary: 'Fine dust deposits on delta scarp, boulder obstacles along ancient riverbed.'
+    hazardSummary: 'Fine dust deposits on delta scarp, boulder obstacles along ancient riverbed.',
+    hazardSummary_uz: 'Delta qoyasidagi nozik chang qatlami, qadimiy daryo tubidagi xarsangtosh to\'siqlari.'
   }
 };
 
-// NASA Mars Weather Live Baseline (Curiosity REMS & Perseverance MEDA fallback)
+// NASA Mars Weather Live Baseline
 export const DEFAULT_MARS_WEATHER = {
   sol: 4995,
   terrestrial_date: '2026-08-25',
   min_temp: -71,
   max_temp: -5,
-  pressure: 777, // Pascals (Earth is 101,325 Pa, Mars is ~0.7% Earth)
+  pressure: 777,
   pressure_string: 'Nominal High',
   atmo_opacity: 'Sunny / Low Dust',
+  atmo_opacity_uz: 'Quyoshli / Chang kam',
   wind_speed: '4.2 m/s',
   wind_direction: 'ENE (68°)',
   local_uv_irradiance_index: 'High (Category 8)',
@@ -291,15 +356,14 @@ export const DEFAULT_MARS_WEATHER = {
 
 // Calculation Utilities for Human Marswalks
 export const EVA_PHYSICS = {
-  gravityMars: 3.72, // m/s² (0.38g)
-  suitWeightKg: 85, // NASA xEMU spacesuit mass
+  gravityMars: 3.72,
+  suitWeightKg: 85,
   astronautMassKg: 75,
   baseMetabolicRateKcalHr: 180,
-  slopeMetabolicMultiplier: 8.5, // extra kcal/hr per degree of incline
-  o2ConsumptionRateLiterMin: 1.25, // nominal walking O2 consumption
-  o2ConsumptionSlopeMultiplier: 0.04, // extra L/min per degree
-  batteryDrawWatts: 140, // life support, suit heaters, CO2 scrubber
-  totalBatteryWh: 1500, // suit battery capacity
-  safeSlopeLimitDeg: 20.0 // slopes steeper than 20° trigger hazard alarms
+  slopeMetabolicMultiplier: 8.5,
+  o2ConsumptionRateLiterMin: 1.25,
+  o2ConsumptionSlopeMultiplier: 0.04,
+  batteryDrawWatts: 140,
+  totalBatteryWh: 1500,
+  safeSlopeLimitDeg: 20.0
 };
-

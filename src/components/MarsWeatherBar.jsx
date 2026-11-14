@@ -5,20 +5,19 @@ import {
   Thermometer, 
   Gauge, 
   ShieldAlert, 
-  Radio, 
   Volume2, 
   VolumeX, 
   RefreshCw,
-  Clock,
-  Sparkles
+  Clock
 } from 'lucide-react';
 import { DEFAULT_MARS_WEATHER } from '../data/marsMissionData';
 import { marsAudio } from '../utils/audioSystem';
+import { TRANSLATIONS } from '../data/translations';
 
-export default function MarsWeatherBar({ weather, setWeather }) {
+export default function MarsWeatherBar({ weather, setWeather, lang = 'en' }) {
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
   const [isMuted, setIsMuted] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [liveMode, setLiveMode] = useState(true);
 
   // Fetch live MSL REMS weather from NASA JSON feed
   const fetchLiveWeather = async () => {
@@ -75,17 +74,17 @@ export default function MarsWeatherBar({ weather, setWeather }) {
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-mars-orange/15 border border-mars-orange/30 text-mars-orange">
           <Clock className="w-3.5 h-3.5 animate-pulse" />
-          <span className="font-orbitron font-bold">SOL {weather.sol}</span>
+          <span className="font-orbitron font-bold">{t.solLabel} {weather.sol}</span>
         </div>
         <span className="hidden sm:inline text-slate-500">•</span>
-        <span className="hidden sm:inline text-slate-400">Earth: {weather.terrestrial_date}</span>
+        <span className="hidden sm:inline text-slate-400">{t.earthDate}: {weather.terrestrial_date}</span>
       </div>
 
       {/* Center: Live Environmental Readings */}
       <div className="flex items-center gap-4 sm:gap-6 overflow-x-auto py-0.5">
         
         {/* Air Temperature */}
-        <div className="flex items-center gap-1.5" title="Atmospheric Air Temperature">
+        <div className="flex items-center gap-1.5" title={t.airTemp}>
           <Thermometer className="w-3.5 h-3.5 text-cyan-400" />
           <span>
             <strong className="text-white">{weather.max_temp}°C</strong> / <span className="text-cyan-300">{weather.min_temp}°C</span>
@@ -93,27 +92,29 @@ export default function MarsWeatherBar({ weather, setWeather }) {
         </div>
 
         {/* Atmospheric Pressure */}
-        <div className="flex items-center gap-1.5" title="Martian Atmospheric Pressure (Curiosity REMS)">
+        <div className="flex items-center gap-1.5" title={t.pressure}>
           <Gauge className="w-3.5 h-3.5 text-amber-400" />
           <span>{weather.pressure} Pa</span>
         </div>
 
         {/* Wind */}
-        <div className="flex items-center gap-1.5" title="Wind Velocity & Direction">
+        <div className="flex items-center gap-1.5" title={t.wind}>
           <Wind className="w-3.5 h-3.5 text-blue-400" />
           <span>{weather.wind_speed}</span>
         </div>
 
         {/* Sky Opacity & Dust */}
-        <div className="flex items-center gap-1.5" title="Atmospheric Dust Tau & Sky Condition">
+        <div className="flex items-center gap-1.5" title={t.skyOpacity}>
           <Sun className="w-3.5 h-3.5 text-yellow-400" />
-          <span className="text-yellow-200">{weather.atmo_opacity}</span>
+          <span className="text-yellow-200">
+            {lang === 'uz' ? (weather.atmo_opacity_uz || 'Quyoshli / Ochiq') : weather.atmo_opacity}
+          </span>
         </div>
 
         {/* Radiation */}
-        <div className="hidden md:flex items-center gap-1.5" title="RAD Radiation Sensor">
+        <div className="hidden md:flex items-center gap-1.5" title={t.radiation}>
           <ShieldAlert className="w-3.5 h-3.5 text-purple-400" />
-          <span className="text-purple-300">0.24 mSv/d (Nominal)</span>
+          <span className="text-purple-300">0.24 mSv/d ({t.nominal})</span>
         </div>
       </div>
 
@@ -123,7 +124,7 @@ export default function MarsWeatherBar({ weather, setWeather }) {
           onClick={fetchLiveWeather}
           disabled={isUpdating}
           className="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-white transition"
-          title="Refresh NASA Live Weather"
+          title={t.refreshWeather}
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isUpdating ? 'animate-spin text-mars-orange' : ''}`} />
         </button>
@@ -133,7 +134,7 @@ export default function MarsWeatherBar({ weather, setWeather }) {
           className={`p-1.5 rounded transition ${
             isMuted ? 'text-red-400 bg-red-950/40' : 'text-slate-400 hover:text-white hover:bg-slate-800'
           }`}
-          title={isMuted ? 'Unmute NASA Audio' : 'Mute NASA Audio'}
+          title={isMuted ? t.unmuteAudio : t.muteAudio}
         >
           {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
         </button>
@@ -142,4 +143,3 @@ export default function MarsWeatherBar({ weather, setWeather }) {
     </div>
   );
 }
-

@@ -9,15 +9,12 @@ import {
   Camera, 
   Compass, 
   Crosshair, 
-  Eye, 
-  Volume2, 
-  VolumeX, 
-  Maximize, 
   Minimize,
   Sparkles,
   ShieldCheck
 } from 'lucide-react';
 import { marsAudio } from '../utils/audioSystem';
+import { TRANSLATIONS } from '../data/translations';
 
 export default function AstronautHUD({ 
   waypoints, 
@@ -25,40 +22,34 @@ export default function AstronautHUD({
   setCurrentWaypointIndex, 
   zone,
   weather,
-  onExitHUD 
+  onExitHUD,
+  lang = 'en'
 }) {
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
   const currentWp = waypoints[currentWaypointIndex] || waypoints[0];
 
   // Astronaut Biometrics Simulation
   const [heartRate, setHeartRate] = useState(78);
   const [o2Level, setO2Level] = useState(86);
-  const [suitPressure, setSuitPressure] = useState(4.3); // PSI
-  const [suitTemp, setSuitTemp] = useState(21.2); // Celsius
-  const [batteryPct, setBatteryPct] = useState(79);
+  const [suitPressure] = useState(4.3);
+  const [batteryPct] = useState(79);
   const [heading, setHeading] = useState(142);
-  const [visorMode, setVisorMode] = useState('optical'); // 'optical', 'thermal', 'mineral'
+  const [visorMode, setVisorMode] = useState('optical');
   const [isAlertActive, setIsAlertActive] = useState(false);
   const [snapshots, setSnapshots] = useState([]);
   const [flashActive, setFlashActive] = useState(false);
 
-  // Dynamic simulation of vitals
   useEffect(() => {
     const timer = setInterval(() => {
-      // Fluctuate heart rate based on slope
       const targetHr = (currentWp?.slopeDeg || 5) > 15 ? 112 : 76;
       setHeartRate(prev => Math.round(prev + (targetHr - prev) * 0.1 + (Math.random() * 4 - 2)));
-      
-      // Gradually consume oxygen
       setO2Level(prev => Math.max(15, Number((prev - 0.01).toFixed(2))));
-
-      // Gentle compass drift
       setHeading(prev => (prev + (Math.random() * 2 - 1) + 360) % 360);
     }, 2000);
 
     return () => clearInterval(timer);
   }, [currentWp]);
 
-  // Warning trigger if slope is steep
   useEffect(() => {
     if ((currentWp?.slopeDeg || 0) > 18) {
       setIsAlertActive(true);
@@ -68,7 +59,6 @@ export default function AstronautHUD({
     }
   }, [currentWp]);
 
-  // Take photo snapshot
   const takeSnapshot = () => {
     setFlashActive(true);
     marsAudio.playBlip();
@@ -76,13 +66,18 @@ export default function AstronautHUD({
 
     const newShot = {
       id: Date.now(),
-      target: currentWp?.name || 'Martian Horizon',
+      target: lang === 'uz' ? (currentWp?.name_uz || currentWp?.name) : currentWp?.name,
       timestamp: new Date().toLocaleTimeString(),
       coords: `${currentWp?.lat.toFixed(4)}°, ${currentWp?.lng.toFixed(4)}°`,
-      mineral: currentWp?.mineralogy || 'Regolith'
+      mineral: lang === 'uz' ? (currentWp?.mineralogy_uz || currentWp?.mineralogy) : currentWp?.mineralogy
     };
     setSnapshots([newShot, ...snapshots]);
   };
+
+  const wpName = lang === 'uz' ? (currentWp?.name_uz || currentWp?.name) : currentWp?.name;
+  const wpGoal = lang === 'uz' ? (currentWp?.scienceGoal_uz || currentWp?.scienceGoal) : currentWp?.scienceGoal;
+  const wpSample = lang === 'uz' ? (currentWp?.sampleTarget_uz || currentWp?.sampleTarget) : currentWp?.sampleTarget;
+  const zoneName = lang === 'uz' ? (zone.name_uz || zone.name) : zone.name;
 
   return (
     <div className="relative w-full h-full bg-black overflow-hidden select-none font-mono">
@@ -109,38 +104,37 @@ export default function AstronautHUD({
         }}
       />
 
-      {/* 3. Curved Astronaut Visor Reflection & CRT Scanlines */}
+      {/* 3. Curved Astronaut Visor Reflection & Scanlines */}
       <div className="absolute inset-0 scanlines pointer-events-none z-10" />
       <div className="absolute inset-0 pointer-events-none z-10 shadow-[inset_0_0_120px_rgba(0,0,0,0.95)]" />
 
-      {/* 4. Helmet Inner Rim Border (Curved HUD Frame) */}
+      {/* 4. Helmet Inner Rim Border */}
       <div className="absolute inset-2 md:inset-6 rounded-[40px] border-2 border-cyan-500/30 pointer-events-none z-10 flex flex-col justify-between p-4 md:p-6">
         
-        {/* TOP HUD BAR: Compass Tape & Mission Header */}
+        {/* TOP HUD BAR */}
         <div className="flex items-start justify-between w-full pointer-events-auto">
-          {/* Left: Astronaut Identity & Sol */}
+          {/* Left: Astronaut Identity */}
           <div className="glass-panel-cyan px-3 py-2 rounded-lg border border-cyan-500/40 text-cyan-300">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
               <span className="font-orbitron font-bold text-xs tracking-wider text-white">
-                NASA EVA-01 // VISOR HUD
+                {t.visorHudHeader}
               </span>
             </div>
             <div className="text-[10px] text-cyan-400/80 mt-0.5">
-              SOL {weather.sol} • CDR. S. CHEN • {zone.name.toUpperCase()}
+              {t.solLabel} {weather.sol} • CDR. S. CHEN • {zoneName.toUpperCase()}
             </div>
           </div>
 
-          {/* Center: Digital Compass Ring Heading */}
+          {/* Center: Digital Compass Ring */}
           <div className="flex flex-col items-center">
             <div className="glass-panel-cyan px-4 py-1.5 rounded-lg border border-cyan-400/50 flex items-center gap-2 text-cyan-300">
               <Compass className="w-4 h-4 text-cyan-400 animate-spin" style={{ animationDuration: '40s' }} />
-              <span className="text-sm font-bold font-orbitron">{Math.round(heading)}° HDG</span>
+              <span className="text-sm font-bold font-orbitron">{Math.round(heading)}° {t.heading}</span>
               <span className="text-[10px] px-1 bg-cyan-900/60 rounded">
-                {heading >= 315 || heading < 45 ? 'NORTH' : heading < 135 ? 'EAST' : heading < 225 ? 'SOUTH' : 'WEST'}
+                {heading >= 315 || heading < 45 ? t.north : heading < 135 ? t.east : heading < 225 ? t.south : t.west}
               </span>
             </div>
-            {/* Degree Tick marks */}
             <div className="flex gap-2 text-[9px] text-cyan-500/60 mt-1">
               <span>090</span>
               <span>•</span>
@@ -152,29 +146,31 @@ export default function AstronautHUD({
             </div>
           </div>
 
-          {/* Right: Visor Mode Switcher & Exit HUD */}
+          {/* Right: Visor Filters & Exit HUD */}
           <div className="flex items-center gap-2">
-            {/* Visor Spectral Mode */}
             <div className="glass-panel px-2 py-1 rounded-lg border border-slate-700 flex gap-1 text-[10px]">
-              {['optical', 'thermal', 'mineral'].map((mode) => (
+              {[
+                { id: 'optical', label: t.opticalMode },
+                { id: 'thermal', label: t.thermalMode },
+                { id: 'mineral', label: t.mineralMode }
+              ].map((m) => (
                 <button
-                  key={mode}
+                  key={m.id}
                   onClick={() => {
-                    setVisorMode(mode);
+                    setVisorMode(m.id);
                     marsAudio.playBlip();
                   }}
                   className={`px-2 py-1 rounded font-bold uppercase transition ${
-                    visorMode === mode 
+                    visorMode === m.id 
                       ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/40' 
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  {mode}
+                  {m.label}
                 </button>
               ))}
             </div>
 
-            {/* Exit HUD Button */}
             <button
               onClick={() => {
                 onExitHUD();
@@ -183,14 +179,13 @@ export default function AstronautHUD({
               className="px-3 py-1.5 rounded-lg bg-red-600/80 hover:bg-red-500 text-white font-orbitron text-xs font-bold transition flex items-center gap-1.5 shadow-lg border border-red-400"
             >
               <Minimize className="w-3.5 h-3.5" />
-              EXIT HUD
+              {t.exitHud}
             </button>
           </div>
         </div>
 
-        {/* CENTER VIEWPORT: Artificial Horizon & Waypoint Target Reticle */}
+        {/* CENTER VIEWPORT: Artificial Horizon & Target Reticle */}
         <div className="relative flex items-center justify-center my-auto">
-          {/* Artificial Horizon Lines */}
           <div className="absolute w-64 h-32 pointer-events-none opacity-40">
             <div className="absolute top-1/2 left-0 w-20 h-0.5 bg-cyan-400" />
             <div className="absolute top-1/2 right-0 w-20 h-0.5 bg-cyan-400" />
@@ -199,47 +194,45 @@ export default function AstronautHUD({
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-cyan-400/60" />
           </div>
 
-          {/* AR Target Reticle on Waypoint */}
           <div className="glass-panel-cyan p-3 rounded-xl border-2 border-cyan-400 text-cyan-200 pointer-events-auto max-w-xs shadow-2xl backdrop-blur-md animate-pulse">
             <div className="flex items-center justify-between pb-1.5 border-b border-cyan-500/30">
               <span className="text-[10px] font-bold text-mars-orange flex items-center gap-1">
                 <Crosshair className="w-3.5 h-3.5" />
-                WAYPOINT {currentWaypointIndex + 1}/{waypoints.length}
+                WP {currentWaypointIndex + 1}/{waypoints.length}
               </span>
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300">
-                BEARING 142°
+                {t.bearing} 142°
               </span>
             </div>
 
             <div className="text-sm font-orbitron font-bold text-white mt-1">
-              {currentWp?.name}
+              {wpName}
             </div>
 
             <div className="text-[11px] text-cyan-300 mt-1 leading-tight">
-              {currentWp?.scienceGoal}
+              {wpGoal}
             </div>
 
             <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-cyan-500/30 text-[10px]">
               <div>
-                <span className="text-cyan-400/70 block">SLOPE ANGLE</span>
+                <span className="text-cyan-400/70 block">{t.slopeIncline}</span>
                 <span className={`font-bold ${currentWp?.slopeDeg > 15 ? 'text-red-400' : 'text-emerald-400'}`}>
-                  {currentWp?.slopeDeg}° {currentWp?.slopeDeg > 15 ? '⚠️ STEEP' : 'NOMINAL'}
+                  {currentWp?.slopeDeg}° {currentWp?.slopeDeg > 15 ? t.steepAlert : t.nominalSlope}
                 </span>
               </div>
               <div>
-                <span className="text-cyan-400/70 block">ELEVATION</span>
+                <span className="text-cyan-400/70 block">{t.elevation}</span>
                 <span className="font-bold text-white">{currentWp?.elevation}m</span>
               </div>
             </div>
 
-            {currentWp?.sampleTarget && (
+            {wpSample && (
               <div className="mt-2 p-1.5 rounded bg-fuchsia-950/60 border border-fuchsia-500/50 text-[10px] text-fuchsia-200 flex items-center gap-1.5">
                 <Sparkles className="w-3 h-3 text-fuchsia-400" />
-                <span>{currentWp.sampleTarget}</span>
+                <span>{wpSample}</span>
               </div>
             )}
 
-            {/* Next / Previous Waypoint Navigation buttons */}
             <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-cyan-500/30">
               <button
                 disabled={currentWaypointIndex === 0}
@@ -249,7 +242,7 @@ export default function AstronautHUD({
                 }}
                 className="px-2 py-1 rounded bg-cyan-900/60 hover:bg-cyan-800 disabled:opacity-40 text-[10px] text-cyan-200"
               >
-                ◀ PREV WP
+                {t.prevWp}
               </button>
               <button
                 disabled={currentWaypointIndex === waypoints.length - 1}
@@ -259,68 +252,62 @@ export default function AstronautHUD({
                 }}
                 className="px-2 py-1 rounded bg-cyan-500 hover:bg-cyan-400 text-black font-bold disabled:opacity-40 text-[10px]"
               >
-                NEXT WP ▶
+                {t.nextWp}
               </button>
             </div>
           </div>
         </div>
 
-        {/* BOTTOM HUD BAR: Bio-Telemetry & Suit Consumables */}
+        {/* BOTTOM HUD BAR */}
         <div className="flex items-end justify-between w-full pointer-events-auto">
-          {/* Left: Astronaut Life Support Vitals */}
           <div className="glass-panel-cyan p-3 rounded-xl border border-cyan-500/40 space-y-2 text-xs">
             <div className="text-[10px] font-bold text-cyan-400 tracking-wider flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              SUIT LIFE SUPPORT (xEMU-04)
+              {t.suitLifeSupport}
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-cyan-200">
-              {/* Heart Rate */}
               <div className="flex items-center gap-2">
                 <Heart className={`w-4 h-4 ${heartRate > 100 ? 'text-red-500 animate-ping' : 'text-rose-400'}`} />
                 <div>
-                  <div className="text-[9px] text-cyan-400/80">PULSE</div>
+                  <div className="text-[9px] text-cyan-400/80">{t.pulse}</div>
                   <div className="font-bold text-sm text-white">{heartRate} <span className="text-[9px]">BPM</span></div>
                 </div>
               </div>
 
-              {/* O2 Level */}
               <div className="flex items-center gap-2">
                 <Wind className="w-4 h-4 text-cyan-400" />
                 <div>
-                  <div className="text-[9px] text-cyan-400/80">O2 TANK</div>
+                  <div className="text-[9px] text-cyan-400/80">{t.o2Tank}</div>
                   <div className="font-bold text-sm text-emerald-300">{o2Level}%</div>
                 </div>
               </div>
 
-              {/* Suit Pressure */}
               <div className="flex items-center gap-2">
                 <Gauge className="w-4 h-4 text-amber-400" />
                 <div>
-                  <div className="text-[9px] text-cyan-400/80">PRESSURE</div>
+                  <div className="text-[9px] text-cyan-400/80">{t.suitPressureLabel}</div>
                   <div className="font-bold text-sm text-white">{suitPressure} <span className="text-[9px]">PSI</span></div>
                 </div>
               </div>
 
-              {/* Battery */}
               <div className="flex items-center gap-2">
                 <Battery className="w-4 h-4 text-emerald-400" />
                 <div>
-                  <div className="text-[9px] text-cyan-400/80">BATTERY</div>
+                  <div className="text-[9px] text-cyan-400/80">{t.battery}</div>
                   <div className="font-bold text-sm text-white">{batteryPct}%</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Center: Action Buttons (Photo Capture & Quindar Mic) */}
           <div className="flex items-center gap-3">
             <button
               onClick={takeSnapshot}
               className="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-orbitron font-bold text-xs flex items-center gap-2 shadow-lg shadow-cyan-500/50 transition transform hover:scale-105 active:scale-95"
             >
               <Camera className="w-4 h-4" />
-              CAPTURE FIELD PHOTO ({snapshots.length})
+              {t.captureFieldPhoto} ({snapshots.length})
             </button>
 
             <button
@@ -329,34 +316,31 @@ export default function AstronautHUD({
               title="Test Radio Quindar Mic"
             >
               <Radio className="w-4 h-4 text-mars-orange" />
-              COMMS
+              {t.commsRadio}
             </button>
           </div>
 
-          {/* Right: Mars Ambient Weather Summary */}
           <div className="glass-panel-cyan p-3 rounded-xl border border-cyan-500/40 text-right text-xs">
-            <div className="text-[10px] text-cyan-400 tracking-wider">MARS AMBIENT // {weather.atmo_opacity}</div>
+            <div className="text-[10px] text-cyan-400 tracking-wider">{t.marsAmbient}</div>
             <div className="text-sm font-bold text-white mt-0.5">
               {weather.max_temp}°C / {weather.min_temp}°C
             </div>
             <div className="text-[10px] text-cyan-300/80 mt-1">
-              Press: {weather.pressure} Pa • Wind: {weather.wind_speed}
+              {weather.pressure} Pa • {weather.wind_speed}
             </div>
           </div>
         </div>
 
       </div>
 
-      {/* Hazardous Slope Banner if Active */}
       {isAlertActive && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-30 glass-panel-alert px-6 py-2.5 rounded-full border border-red-500 text-red-300 flex items-center gap-3 shadow-2xl animate-bounce">
           <AlertTriangle className="w-5 h-5 text-red-500" />
           <span className="font-orbitron font-bold text-xs text-white tracking-widest uppercase">
-            WARNING: STEEP TERRAIN INCLINE ({currentWp?.slopeDeg}°) // RISK OF SLIP
+            {t.slopeWarningHud} ({currentWp?.slopeDeg}°)
           </span>
         </div>
       )}
     </div>
   );
 }
-

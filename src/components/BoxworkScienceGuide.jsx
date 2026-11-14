@@ -1,19 +1,19 @@
 import React from 'react';
 import { 
   Mountain, 
-  Sparkles, 
   ExternalLink, 
-  FileText, 
-  Compass, 
   ShieldCheck, 
   AlertCircle,
   FlaskConical,
-  Layers,
-  History
+  History,
+  X
 } from 'lucide-react';
 import { marsAudio } from '../utils/audioSystem';
+import { TRANSLATIONS } from '../data/translations';
 
-export default function BoxworkScienceGuide({ onClose }) {
+export default function BoxworkScienceGuide({ onClose, lang = 'en' }) {
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 md:p-8 animate-in fade-in select-none">
       <div className="relative max-w-3xl w-full bg-slate-900 border border-fuchsia-500/50 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
@@ -26,10 +26,10 @@ export default function BoxworkScienceGuide({ onClose }) {
             </span>
             <div>
               <span className="text-[10px] font-mono text-fuchsia-400 font-bold uppercase tracking-wider">
-                NASA SCIENCE DOSSIER // GEOLOGICAL TARGET STUDY
+                {t.dossierBadge}
               </span>
               <h2 className="text-base font-orbitron font-bold text-white">
-                Mount Sharp Boxwork Formations (Curiosity 2024–2025)
+                {t.dossierTitle}
               </h2>
             </div>
           </div>
@@ -40,7 +40,7 @@ export default function BoxworkScienceGuide({ onClose }) {
             }}
             className="text-slate-400 hover:text-white p-2 text-base font-mono rounded-lg hover:bg-slate-800 transition"
           >
-            ✕
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -56,7 +56,7 @@ export default function BoxworkScienceGuide({ onClose }) {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-90" />
             <div className="absolute bottom-3 left-3 right-3 text-[11px] font-mono text-slate-300">
-              <span className="text-fuchsia-300 font-bold">PIA26388:</span> Curiosity Mastcam mosaic of the boxwork ridge network at Mount Sharp, Mars. Spanning 10 to 20 kilometers across the sulfate-bearing unit.
+              {t.dossierImageCaption}
             </div>
           </div>
 
@@ -64,13 +64,13 @@ export default function BoxworkScienceGuide({ onClose }) {
           <div className="bg-slate-950/70 p-4 rounded-xl border border-slate-800 space-y-2">
             <h3 className="text-sm font-orbitron font-bold text-fuchsia-400 flex items-center gap-2">
               <History className="w-4 h-4" />
-              1. Geological Genesis: How Did Boxwork Form on Mars?
+              {t.dossierSec1Title}
             </h3>
             <p className="text-slate-300">
-              Boxwork is a rare geological pattern of intersecting ridges resembling honeycombs or polygonal webs. On Mars, this phenomenon was observed at an unprecedented planetary scale by NASA’s Curiosity rover in late 2024 and 2025 along lower Mount Sharp.
+              {t.dossierSec1P1}
             </p>
             <p className="text-slate-300">
-              Billions of years ago, as Gale Crater was drying up, underground tectonic and impact stresses cracked the bedrock. Later, mineral-saturated groundwater seeped into these cracks, depositing hard minerals like <strong>calcium sulfate (gypsum)</strong>, <strong>silica</strong>, and <strong>iron oxides</strong>. Over hundreds of millions of years, fierce Martian sandstorms eroded the softer surrounding bedrock, leaving these cemented mineral fracture walls standing tall as razor-sharp ridge crests.
+              {t.dossierSec1P2}
             </p>
           </div>
 
@@ -79,20 +79,20 @@ export default function BoxworkScienceGuide({ onClose }) {
             <div className="bg-slate-950/70 p-3.5 rounded-xl border border-cyan-500/30">
               <div className="flex items-center gap-2 text-cyan-400 font-bold font-orbitron text-xs mb-1">
                 <FlaskConical className="w-4 h-4" />
-                Water History & Biosignatures
+                {t.dossierSec2LeftTitle}
               </div>
               <p className="text-slate-300 text-[11px]">
-                The boxwork proves that liquid groundwater persisted in Mars’ crust far later into the planet’s drying phase than previously believed. The mineral veins can trap microscopic fluid inclusions—actual droplets of ancient Martian groundwater sealed for 3 billion years!
+                {t.dossierSec2LeftDesc}
               </p>
             </div>
 
             <div className="bg-slate-950/70 p-3.5 rounded-xl border border-amber-500/30">
               <div className="flex items-center gap-2 text-amber-400 font-bold font-orbitron text-xs mb-1">
                 <AlertCircle className="w-4 h-4" />
-                Astronaut Traversability Hazards
+                {t.dossierSec2RightTitle}
               </div>
               <p className="text-slate-300 text-[11px]">
-                Boxwork ridges stand 1 to 2 meters high with knife-edge sharpness. Rover wheels and astronaut boot soles face severe puncture risks. Navigation routes must follow pre-scouted sediment corridors rather than crossing ridge crests perpendicularly.
+                {t.dossierSec2RightDesc}
               </p>
             </div>
           </div>
@@ -101,19 +101,19 @@ export default function BoxworkScienceGuide({ onClose }) {
           <div className="bg-fuchsia-950/30 p-4 rounded-xl border border-fuchsia-500/40 space-y-2">
             <h3 className="text-sm font-orbitron font-bold text-fuchsia-300 flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              Human Marswalk EVA Sampling Protocol
+              {t.dossierSec3Title}
             </h3>
             <ol className="list-decimal list-inside space-y-1.5 text-slate-300 font-mono text-[11px]">
-              <li><strong>Standoff Raman & LIBS Scan:</strong> Fire handheld laser spectrometer at vein intersection to verify sulfate vs silica mineralogy.</li>
-              <li><strong>Dust Clearance:</strong> Use gas-puff dust removal tool (DRT) to expose pristine crystal lattices without scratching.</li>
-              <li><strong>Diamond Core Extraction:</strong> Engage percussive rotary drill at 350 RPM. Target 5 cm depth into vein matrix to preserve fluid inclusions.</li>
-              <li><strong>Nitrogen Hermetic Seal:</strong> Insert extracted core into titanium sample tube (Sample Tube G-04) and seal with 500 kPa cold-weld cap.</li>
+              <li>{t.dossierSec3Step1}</li>
+              <li>{t.dossierSec3Step2}</li>
+              <li>{t.dossierSec3Step3}</li>
+              <li>{t.dossierSec3Step4}</li>
             </ol>
           </div>
 
           {/* External Citation */}
           <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] font-mono text-slate-400">
-            <span>NASA Science Mission Directorate (PIA26388)</span>
+            <span>{t.dossierCitation}</span>
             <a 
               href="https://science.nasa.gov/resource/curiositys-proposed-path-up-mount-sharp/" 
               target="_blank" 
@@ -130,4 +130,3 @@ export default function BoxworkScienceGuide({ onClose }) {
     </div>
   );
 }
-

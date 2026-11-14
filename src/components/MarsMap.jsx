@@ -9,14 +9,15 @@ import {
   Compass, 
   Maximize2, 
   Plus, 
-  Trash2, 
-  CheckCircle2,
+  X,
   Mountain,
   Flame,
   ShieldAlert,
-  Info
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { marsAudio } from '../utils/audioSystem';
+import { TRANSLATIONS } from '../data/translations';
 
 export default function MarsMap({ 
   zone, 
@@ -26,16 +27,17 @@ export default function MarsMap({
   onAddWaypoint, 
   onRemoveWaypoint,
   isAddMode,
-  setIsAddMode
+  setIsAddMode,
+  lang = 'en'
 }) {
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const layersGroupRef = useRef({});
-  const routePolylineRef = useRef(null);
-  const markersRef = useRef([]);
 
   // Active Map Layer States
-  const [baseMap, setBaseMap] = useState('mola'); // 'mola', 'viking', 'themis'
+  const [baseMap, setBaseMap] = useState('mola'); // 'mola', 'viking', 'themis', 'trek'
+  const [isLayersOpen, setIsLayersOpen] = useState(false); // Toggle state for the layers drawer!
   const [layerOpacity, setLayerOpacity] = useState({
     slopeHazard: 0.75,
     mineralogy: 0.7,
@@ -52,6 +54,20 @@ export default function MarsMap({
   });
   const [mouseCoords, setMouseCoords] = useState({ lat: 0, lng: 0 });
 
+  // Convert (x, y, z) to Google Mars Quadkey for seamless worldwide coverage
+  const toQuadKey = (x, y, z) => {
+    const chars = ['q', 'r', 't', 's'];
+    let key = 't';
+    for (let i = z; i > 0; i--) {
+      let digit = 0;
+      const mask = 1 << (i - 1);
+      if ((x & mask) !== 0) digit += 1;
+      if ((y & mask) !== 0) digit += 2;
+      key += chars[digit];
+    }
+    return key;
+  };
+
   // 1. Initialize Map
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -60,7 +76,6 @@ export default function MarsMap({
       mapRef.current.remove();
     }
 
-    // Plate Carrée projection for Mars: standard L.CRS.EPSG4326
     const map = L.map(mapContainerRef.current, {
       center: zone.center,
       zoom: zone.zoom,
@@ -85,18 +100,24 @@ export default function MarsMap({
     // Map click handler for adding custom waypoints
     map.on('click', (e) => {
       if (isAddMode && onAddWaypoint) {
+        const wpNum = waypoints.length + 1;
         onAddWaypoint({
           id: `custom-${Date.now()}`,
-          name: `EVA Waypoint ${waypoints.length + 1}`,
+          name: `EVA Waypoint ${wpNum}`,
+          name_uz: `EVA Nuqtasi ${wpNum}`,
           lat: Number(e.latlng.lat.toFixed(4)),
           lng: Number(e.latlng.lng.toFixed(4)),
           elevation: Math.round(-4200 + Math.random() * 500),
           type: 'custom',
           hazard: 'Nominal',
+          hazard_uz: 'Xavfsiz',
           slopeDeg: Math.round(3 + Math.random() * 12),
           mineralogy: 'Regolith / Silt Breccia',
+          mineralogy_uz: 'Regolit / Mayda Tosh Cho\'kindisi',
           scienceGoal: 'Astronaut field inspection & rock hammer strike test.',
+          scienceGoal_uz: 'Dala ko\'zdan kechiruvi va geologik bolg\'a zarba sinovi.',
           notes: 'Manually designated field target.',
+          notes_uz: 'Qo\'lda belgilangan dala nuqtasi.',
           sampleTarget: null,
           img: null
         });
@@ -121,7 +142,7 @@ export default function MarsMap({
     };
   }, [zone.id]);
 
-  // 2. Update Base Tile Layer
+  // 2. Update Base Tile Layer with Seamless Web Mercator Planetary Tiles & Error Fallbacks
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -131,45 +152,47 @@ export default function MarsMap({
     }
 
     let tileLayer;
+
     if (baseMap === 'mola') {
-      // NASA MGS MOLA Elevation & Shaded Relief
-      tileLayer = L.tileLayer('https://trek.nasa.gov/tiles/Mars/EQ/Mars_MGS_MOLA_ClrShade_merge_global_463m/1.0.0/default/default028mm/{z}/{y}/{x}.jpg', {
+      // Google Mars MOLA Elevation (Seamless Worldwide Coverage without black squares)
+      const QuadElevationLayer = L.TileLayer.extend({
+        getTileUrl: function(coords) {
+          const qk = toQuadKey(coords.x, coords.y, coords.z);
+          return `https://mw1.google.com/mw-planetary/mars/elevation/${qk}.jpg`;
+        }
+      });
+      tileLayer = new QuadElevationLayer('', {
         maxZoom: 14,
-        maxNativeZoom: 7,
-        attribution: 'NASA/JPL/GSFC Mars MOLA'
+        maxNativeZoom: 8,
+        errorTileUrl: 'https://mw1.google.com/mw-planetary/mars/elevation/t.jpg',
+        attribution: 'NASA/GSFC MOLA Elevation'
       });
     } else if (baseMap === 'viking') {
-      // NASA Viking Color Mosaic
-      tileLayer = L.tileLayer('https://trek.nasa.gov/tiles/Mars/EQ/Mars_Viking_MDIM21_ClrMosaic_global_232m/1.0.0/default/default028mm/{z}/{y}/{x}.jpg', {
+      // Google Mars Viking True Color Mosaic
+      const QuadVikingLayer = L.TileLayer.extend({
+        getTileUrl: function(coords) {
+          const qk = toQuadKey(coords.x, coords.y, coords.z);
+          return `https://mw1.google.com/mw-planetary/mars/visible/${qk}.jpg`;
+        }
+      });
+      tileLayer = new QuadVikingLayer('', {
         maxZoom: 14,
-        maxNativeZoom: 7,
-        attribution: 'NASA/USGS Viking MDIM2.1'
+        maxNativeZoom: 8,
+        errorTileUrl: 'https://mw1.google.com/mw-planetary/mars/visible/t.jpg',
+        attribution: 'NASA/USGS Viking Color Mosaic'
       });
     } else if (baseMap === 'themis') {
       // Google Mars / THEMIS Infrared Thermal
-      // Custom tile generator for Google Mars quadkeys
-      const toQuadKey = (x, y, z) => {
-        const chars = ['q', 'r', 't', 's'];
-        let key = 't';
-        for (let i = z; i > 0; i--) {
-          let digit = 0;
-          const mask = 1 << (i - 1);
-          if ((x & mask) !== 0) digit += 1;
-          if ((y & mask) !== 0) digit += 2;
-          key += chars[digit];
-        }
-        return key;
-      };
-
-      const CustomQuadTileLayer = L.TileLayer.extend({
+      const QuadThemisLayer = L.TileLayer.extend({
         getTileUrl: function(coords) {
           const qk = toQuadKey(coords.x, coords.y, coords.z);
           return `https://mw1.google.com/mw-planetary/mars/infrared/${qk}.jpg`;
         }
       });
-      tileLayer = new CustomQuadTileLayer('', {
+      tileLayer = new QuadThemisLayer('', {
         maxZoom: 14,
         maxNativeZoom: 8,
+        errorTileUrl: 'https://mw1.google.com/mw-planetary/mars/infrared/t.jpg',
         attribution: 'NASA/ASU THEMIS Infrared'
       });
     }
@@ -183,7 +206,6 @@ export default function MarsMap({
     const map = mapRef.current;
     if (!map || !layersGroupRef.current.slopeHazard) return;
 
-    // Clear existing overlay features
     layersGroupRef.current.slopeHazard.clearLayers();
     layersGroupRef.current.mineralogy.clearLayers();
     layersGroupRef.current.thermalInertia.clearLayers();
@@ -194,9 +216,7 @@ export default function MarsMap({
 
     // A. Slope Hazard Heatmap Overlay
     if (activeLayers.slopeHazard) {
-      // Create danger zones (>20° steep slopes, cliff edges)
       const steepZones = [
-        // Gale Vera Rubin Ridge steep escarpment or Jezero delta scarp
         {
           coords: [
             [cLat - 0.07, cLng - 0.03],
@@ -205,8 +225,10 @@ export default function MarsMap({
             [cLat - 0.055, cLng - 0.01]
           ],
           color: '#ef4444',
-          label: 'STEEP ESCARPMENT (>22° Slope Hazard)',
-          desc: 'High slip risk. Unpassable for pressurized rover. Hand-tethers required for astronauts.'
+          label: lang === 'uz' ? 'TIK QOYALAR (>22° Nishablik)' : 'STEEP ESCARPMENT (>22° Slope Hazard)',
+          desc: lang === 'uz' 
+            ? 'Yuqori sirpanish xavfi. Rover o\'ta olmaydi. Skafandrli astronavtlar uchun arqon tasmalar shart.'
+            : 'High slip risk. Unpassable for pressurized rover. Hand-tethers required for astronauts.'
         },
         {
           coords: [
@@ -215,8 +237,10 @@ export default function MarsMap({
             [cLat + 0.05, cLng - 0.025]
           ],
           color: '#f59e0b',
-          label: 'MODERATE INCLINE (12°-18° Slope Caution)',
-          desc: 'Increased suit oxygen burn rate (+45%). Rocky scree traversability caution.'
+          label: lang === 'uz' ? 'O\'RTA QIYALIK (12°-18° Nishablik)' : 'MODERATE INCLINE (12°-18° Slope Caution)',
+          desc: lang === 'uz'
+            ? 'Kislorod sarfi +45% oshadi. Toshli so\'qmoqlarda ehtiyotkorlik zarur.'
+            : 'Increased suit oxygen burn rate (+45%). Rocky scree traversability caution.'
         }
       ];
 
@@ -235,28 +259,33 @@ export default function MarsMap({
 
     // B. CRISM Mineralogy Overlays (Phyllosilicates, Sulfates, Boxwork Formations, Carbonates)
     if (activeLayers.mineralogy) {
-      // Boxwork Ridge & Sulfate deposits
       const mineralFeatures = [
         {
           center: [cLat - 0.12, cLng - 0.08],
           radius: 2200,
-          color: '#e879f9', // Boxwork purple/magenta
-          label: 'Curiosity 2024-2025 Boxwork Ridge System',
-          desc: 'Polygonal honeycomb boxwork ridges formed by groundwater mineral veins filling bedrock fractures.'
+          color: '#e879f9',
+          label: lang === 'uz' ? 'Curiosity 2024-2025 Boxwork Tizmalari' : 'Curiosity 2024-2025 Boxwork Ridge System',
+          desc: lang === 'uz'
+            ? 'Yerosti suvlari yoriqlarni minerallar bilan to\'ldirishi natijasida hosil bo\'lgan asalari uyasimon tosh tizmalari.'
+            : 'Polygonal honeycomb boxwork ridges formed by groundwater mineral veins filling bedrock fractures.'
         },
         {
           center: [cLat + 0.02, cLng + 0.02],
           radius: 1800,
-          color: '#38bdf8', // Clays / phyllosilicates cyan
-          label: 'Hydrated Phyllosilicates (Smectite Clays)',
-          desc: 'Ancient freshwater lake sediments with high organic compound preservation potential.'
+          color: '#38bdf8',
+          label: lang === 'uz' ? 'Gidratlangan Fillosilikatlar (Smektit Gillari)' : 'Hydrated Phyllosilicates (Smectite Clays)',
+          desc: lang === 'uz'
+            ? 'Organik birikmalarni saqlab qolish xususiyatiga ega qadimgi chuchuk suvli ko\'l cho\'kindilari.'
+            : 'Ancient freshwater lake sediments with high organic compound preservation potential.'
         },
         {
           center: [cLat - 0.04, cLng + 0.05],
           radius: 1500,
-          color: '#34d399', // Carbonates emerald green
-          label: 'Magnesium Carbonate Margin Beds',
-          desc: 'Precipitated alkaline lake minerals sealing potential biosignature microbial fossils.'
+          color: '#34d399',
+          label: lang === 'uz' ? 'Magniy Karbonatli Sohil Qatlamlari' : 'Magnesium Carbonate Margin Beds',
+          desc: lang === 'uz'
+            ? 'Ishqoriy ko\'l suvidan cho\'kkan va mikrofosil qoldiqlarini germetik saqlab qoluvchi karbonat qatlamlari.'
+            : 'Precipitated alkaline lake minerals sealing potential biosignature microbial fossils.'
         }
       ];
 
@@ -280,8 +309,10 @@ export default function MarsMap({
           center: [cLat - 0.035, cLng - 0.005],
           radius: 1400,
           color: '#f97316',
-          label: 'Active Basaltic Sand Dunes (Low Thermal Inertia)',
-          desc: 'Loose fine sand. 60%+ wheel slippage hazard. Avoid rover ingress.'
+          label: lang === 'uz' ? 'Faol Bazalt Qum Barxanlari (Past Termal Inersiya)' : 'Active Basaltic Sand Dunes (Low Thermal Inertia)',
+          desc: lang === 'uz'
+            ? 'Yumshoq nozik qum. 60%+ g\'ildirak sirpanish xavfi. Rover kirishi taqiqlanadi.'
+            : 'Loose fine sand. 60%+ wheel slippage hazard. Avoid rover ingress.'
         }
       ];
 
@@ -316,7 +347,7 @@ export default function MarsMap({
           weight: 1,
           dashArray: '3, 6'
         });
-        ring.bindTooltip(`Elevation Contour: ${cr.label}`, { sticky: true });
+        ring.bindTooltip(`${t.elevationContours}: ${cr.label}`, { sticky: true });
         layersGroupRef.current.contours.addLayer(ring);
       });
     }
@@ -331,11 +362,11 @@ export default function MarsMap({
         weight: 1,
         dashArray: '8, 8'
       });
-      radZone.bindTooltip('Galactic Cosmic Ray Exposure Zone (0.26 mSv/day)', { sticky: true });
+      radZone.bindTooltip(lang === 'uz' ? 'GCR Kosmik Nurlar Maydoni (0.26 mSv/kun)' : 'Galactic Cosmic Ray Exposure Zone (0.26 mSv/day)', { sticky: true });
       layersGroupRef.current.radiation.addLayer(radZone);
     }
 
-  }, [activeLayers, layerOpacity, zone.id]);
+  }, [activeLayers, layerOpacity, zone.id, lang]);
 
   // 4. Render Route Polyline & Waypoint Markers
   useEffect(() => {
@@ -347,7 +378,6 @@ export default function MarsMap({
 
     if (waypoints.length === 0) return;
 
-    // Draw Route Polyline
     const latLngs = waypoints.map(w => [w.lat, w.lng]);
     const routeLine = L.polyline(latLngs, {
       color: '#ff5722',
@@ -355,10 +385,9 @@ export default function MarsMap({
       opacity: 0.9,
       dashArray: '8, 6'
     });
-    routeLine.bindTooltip(`Total Route: ${waypoints.length} waypoints planned`, { sticky: true });
+    routeLine.bindTooltip(`${waypoints.length} ${lang === 'uz' ? 'nuqta belgilangan' : 'waypoints planned'}`, { sticky: true });
     layersGroupRef.current.routes.addLayer(routeLine);
 
-    // Draw Markers
     waypoints.forEach((wp, index) => {
       const isSelected = selectedWaypoint?.id === wp.id;
       const isBase = wp.type === 'base';
@@ -389,210 +418,245 @@ export default function MarsMap({
         marsAudio.playBlip();
       });
 
+      const wpDisplayName = lang === 'uz' ? (wp.name_uz || wp.name) : wp.name;
       marker.bindTooltip(`
         <div class="p-1">
-          <div class="text-[10px] font-mono text-mars-orange font-bold uppercase">WAYPOINT ${index + 1}</div>
-          <div class="text-xs font-bold text-white">${wp.name}</div>
-          <div class="text-[11px] text-slate-300 mt-1">Elev: ${wp.elevation}m | Slope: ${wp.slopeDeg}°</div>
+          <div class="text-[10px] font-mono text-mars-orange font-bold uppercase">WP ${index + 1}</div>
+          <div class="text-xs font-bold text-white">${wpDisplayName}</div>
+          <div class="text-[11px] text-slate-300 mt-1">${t.elevation}: ${wp.elevation}m | ${t.slopeIncline}: ${wp.slopeDeg}°</div>
         </div>
       `, { direction: 'top', offset: [0, -12] });
 
       layersGroupRef.current.markers.addLayer(marker);
     });
 
-  }, [waypoints, selectedWaypoint]);
+  }, [waypoints, selectedWaypoint, lang]);
+
+  const activeLayersCount = Object.values(activeLayers).filter(Boolean).length;
 
   return (
     <div className="relative w-full h-full flex flex-col">
       {/* Map DOM Element */}
       <div ref={mapContainerRef} className="w-full h-full z-0 cursor-crosshair" />
 
-      {/* Top Left: Scientific Layer Controller Dropdown */}
+      {/* TOP LEFT: COMPACT TOGGLE BUTTON & DRAWER FOR NASA SCIENCE LAYERS */}
       <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 pointer-events-auto">
-        <div className="glass-panel p-3 rounded-xl border border-mars-orange/30 w-72 shadow-2xl">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-700/60 mb-2">
-            <span className="text-xs font-orbitron font-bold text-slate-100 flex items-center gap-1.5">
-              <Layers className="w-4 h-4 text-mars-orange" />
-              NASA Science Layers
-            </span>
-            <span className="text-[10px] font-mono text-mars-orange bg-mars-orange/20 px-1.5 py-0.5 rounded">
-              {Object.values(activeLayers).filter(Boolean).length}/5 Active
-            </span>
-          </div>
+        
+        {/* Toggle Button (Always visible compact pill) */}
+        <button
+          onClick={() => {
+            setIsLayersOpen(!isLayersOpen);
+            marsAudio.playBlip();
+          }}
+          className={`glass-panel px-3.5 py-2 rounded-xl border text-xs font-orbitron font-bold flex items-center gap-2 shadow-2xl transition transform hover:scale-105 ${
+            isLayersOpen 
+              ? 'bg-mars-orange/25 border-mars-orange text-white' 
+              : 'border-mars-orange/40 text-slate-200 hover:text-white hover:border-mars-orange'
+          }`}
+        >
+          <Layers className="w-4 h-4 text-mars-orange" />
+          <span>{t.layersButton}</span>
+          <span className="text-[10px] font-mono text-mars-orange bg-mars-orange/20 px-1.5 py-0.5 rounded border border-mars-orange/30">
+            {activeLayersCount}/5
+          </span>
+          {isLayersOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
+        </button>
 
-          {/* Base Map Switcher */}
-          <div className="mb-3">
-            <label className="text-[10px] font-mono text-slate-400 block mb-1">BASE PLANETARY TILESET</label>
-            <div className="grid grid-cols-3 gap-1">
-              {[
-                { id: 'mola', label: 'MOLA DEM' },
-                { id: 'viking', label: 'Viking Color' },
-                { id: 'themis', label: 'THEMIS IR' }
-              ].map(b => (
-                <button
-                  key={b.id}
-                  onClick={() => {
-                    setBaseMap(b.id);
-                    marsAudio.playBlip();
-                  }}
-                  className={`text-[10px] py-1 px-1.5 rounded font-mono font-bold transition text-center border ${
-                    baseMap === b.id
-                      ? 'bg-mars-orange/30 border-mars-orange text-white'
-                      : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  {b.label}
-                </button>
-              ))}
+        {/* Floating Drawer Panel (ONLY opens when user clicks the button!) */}
+        {isLayersOpen && (
+          <div className="glass-panel p-3.5 rounded-xl border border-mars-orange/40 w-72 sm:w-80 shadow-2xl space-y-3 animate-in fade-in slide-in-from-top-2">
+            
+            {/* Header with Close '✕' Button */}
+            <div className="flex items-center justify-between pb-2 border-b border-slate-700/60">
+              <span className="text-xs font-orbitron font-bold text-slate-100 flex items-center gap-1.5">
+                <Layers className="w-4 h-4 text-mars-orange" />
+                {t.layersButton}
+              </span>
+              <button
+                onClick={() => setIsLayersOpen(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-md hover:bg-slate-800 text-xs font-mono transition"
+                title={t.closePanel}
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
-          </div>
 
-          {/* Layer Toggles & Opacity */}
-          <div className="space-y-2 text-xs">
-            {/* Slope Hazard */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setActiveLayers(p => ({ ...p, slopeHazard: !p.slopeHazard }))}
-                  className={`p-1 rounded ${activeLayers.slopeHazard ? 'text-red-400' : 'text-slate-500'}`}
-                >
-                  {activeLayers.slopeHazard ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                </button>
-                <span className="text-slate-200 text-[11px] flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3 text-red-400" />
-                  Slope Hazard Map
-                </span>
+            {/* Base Map Switcher */}
+            <div>
+              <label className="text-[10px] font-mono text-slate-400 block mb-1">{t.baseTileset}</label>
+              <div className="grid grid-cols-3 gap-1">
+                {[
+                  { id: 'mola', label: 'MOLA DEM' },
+                  { id: 'viking', label: 'Viking Color' },
+                  { id: 'themis', label: 'THEMIS IR' }
+                ].map(b => (
+                  <button
+                    key={b.id}
+                    onClick={() => {
+                      setBaseMap(b.id);
+                      marsAudio.playBlip();
+                    }}
+                    className={`text-[10px] py-1 px-1.5 rounded font-mono font-bold transition text-center border ${
+                      baseMap === b.id
+                        ? 'bg-mars-orange/30 border-mars-orange text-white'
+                        : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {b.label}
+                  </button>
+                ))}
               </div>
-              <input
-                type="range"
-                min="0.1"
-                max="1"
-                step="0.05"
-                value={layerOpacity.slopeHazard}
-                onChange={(e) => setLayerOpacity(p => ({ ...p, slopeHazard: parseFloat(e.target.value) }))}
-                className="w-16 h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-red-500"
-              />
             </div>
 
-            {/* Mineralogy / CRISM */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setActiveLayers(p => ({ ...p, mineralogy: !p.mineralogy }))}
-                  className={`p-1 rounded ${activeLayers.mineralogy ? 'text-fuchsia-400' : 'text-slate-500'}`}
-                >
-                  {activeLayers.mineralogy ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                </button>
-                <span className="text-slate-200 text-[11px] flex items-center gap-1">
-                  <Mountain className="w-3 h-3 text-fuchsia-400" />
-                  CRISM Minerals & Boxwork
-                </span>
+            {/* Layer Toggles & Opacity */}
+            <div className="space-y-2 text-xs">
+              {/* Slope Hazard */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setActiveLayers(p => ({ ...p, slopeHazard: !p.slopeHazard }))}
+                    className={`p-1 rounded ${activeLayers.slopeHazard ? 'text-red-400' : 'text-slate-500'}`}
+                  >
+                    {activeLayers.slopeHazard ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                  </button>
+                  <span className="text-slate-200 text-[11px] flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3 text-red-400" />
+                    {t.slopeHazardMap}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0.1"
+                  max="1"
+                  step="0.05"
+                  value={layerOpacity.slopeHazard}
+                  onChange={(e) => setLayerOpacity(p => ({ ...p, slopeHazard: parseFloat(e.target.value) }))}
+                  className="w-16 h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-red-500"
+                />
               </div>
-              <input
-                type="range"
-                min="0.1"
-                max="1"
-                step="0.05"
-                value={layerOpacity.mineralogy}
-                onChange={(e) => setLayerOpacity(p => ({ ...p, mineralogy: parseFloat(e.target.value) }))}
-                className="w-16 h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-fuchsia-500"
-              />
-            </div>
 
-            {/* THEMIS Thermal / Sand Traps */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setActiveLayers(p => ({ ...p, thermalInertia: !p.thermalInertia }))}
-                  className={`p-1 rounded ${activeLayers.thermalInertia ? 'text-amber-400' : 'text-slate-500'}`}
-                >
-                  {activeLayers.thermalInertia ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                </button>
-                <span className="text-slate-200 text-[11px] flex items-center gap-1">
-                  <Flame className="w-3 h-3 text-amber-400" />
-                  Thermal Sand Traps
-                </span>
+              {/* Mineralogy / CRISM */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setActiveLayers(p => ({ ...p, mineralogy: !p.mineralogy }))}
+                    className={`p-1 rounded ${activeLayers.mineralogy ? 'text-fuchsia-400' : 'text-slate-500'}`}
+                  >
+                    {activeLayers.mineralogy ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                  </button>
+                  <span className="text-slate-200 text-[11px] flex items-center gap-1">
+                    <Mountain className="w-3 h-3 text-fuchsia-400" />
+                    {t.crismMinerals}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0.1"
+                  max="1"
+                  step="0.05"
+                  value={layerOpacity.mineralogy}
+                  onChange={(e) => setLayerOpacity(p => ({ ...p, mineralogy: parseFloat(e.target.value) }))}
+                  className="w-16 h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-fuchsia-500"
+                />
               </div>
-              <input
-                type="range"
-                min="0.1"
-                max="1"
-                step="0.05"
-                value={layerOpacity.thermalInertia}
-                onChange={(e) => setLayerOpacity(p => ({ ...p, thermalInertia: parseFloat(e.target.value) }))}
-                className="w-16 h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-amber-500"
-              />
-            </div>
 
-            {/* Elevation Contours */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setActiveLayers(p => ({ ...p, contours: !p.contours }))}
-                  className={`p-1 rounded ${activeLayers.contours ? 'text-cyan-400' : 'text-slate-500'}`}
-                >
-                  {activeLayers.contours ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                </button>
-                <span className="text-slate-200 text-[11px]">Elevation Contours</span>
+              {/* THEMIS Thermal / Sand Traps */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setActiveLayers(p => ({ ...p, thermalInertia: !p.thermalInertia }))}
+                    className={`p-1 rounded ${activeLayers.thermalInertia ? 'text-amber-400' : 'text-slate-500'}`}
+                  >
+                    {activeLayers.thermalInertia ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                  </button>
+                  <span className="text-slate-200 text-[11px] flex items-center gap-1">
+                    <Flame className="w-3 h-3 text-amber-400" />
+                    {t.thermalSandTraps}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0.1"
+                  max="1"
+                  step="0.05"
+                  value={layerOpacity.thermalInertia}
+                  onChange={(e) => setLayerOpacity(p => ({ ...p, thermalInertia: parseFloat(e.target.value) }))}
+                  className="w-16 h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-amber-500"
+                />
               </div>
-              <input
-                type="range"
-                min="0.1"
-                max="1"
-                step="0.05"
-                value={layerOpacity.contours}
-                onChange={(e) => setLayerOpacity(p => ({ ...p, contours: parseFloat(e.target.value) }))}
-                className="w-16 h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-cyan-500"
-              />
-            </div>
 
-            {/* Space Weather & Radiation */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setActiveLayers(p => ({ ...p, radiation: !p.radiation }))}
-                  className={`p-1 rounded ${activeLayers.radiation ? 'text-purple-400' : 'text-slate-500'}`}
-                >
-                  {activeLayers.radiation ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                </button>
-                <span className="text-slate-200 text-[11px] flex items-center gap-1">
-                  <ShieldAlert className="w-3 h-3 text-purple-400" />
-                  GCR Radiation Zone
-                </span>
+              {/* Elevation Contours */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setActiveLayers(p => ({ ...p, contours: !p.contours }))}
+                    className={`p-1 rounded ${activeLayers.contours ? 'text-cyan-400' : 'text-slate-500'}`}
+                  >
+                    {activeLayers.contours ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                  </button>
+                  <span className="text-slate-200 text-[11px]">{t.elevationContours}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.1"
+                  max="1"
+                  step="0.05"
+                  value={layerOpacity.contours}
+                  onChange={(e) => setLayerOpacity(p => ({ ...p, contours: parseFloat(e.target.value) }))}
+                  className="w-16 h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-cyan-500"
+                />
               </div>
-              <input
-                type="range"
-                min="0.1"
-                max="1"
-                step="0.05"
-                value={layerOpacity.radiation}
-                onChange={(e) => setLayerOpacity(p => ({ ...p, radiation: parseFloat(e.target.value) }))}
-                className="w-16 h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-purple-500"
-              />
-            </div>
-          </div>
-        </div>
 
-        {/* Map Legend Card */}
-        <div className="glass-panel p-2.5 rounded-xl border border-slate-800 text-[10px] font-mono space-y-1 text-slate-300">
-          <div className="font-bold text-slate-400 mb-1">SLOPE HAZARD CLASSIFICATION</div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-            <span>&lt; 10° Slope: Nominal Walking</span>
+              {/* Space Weather & Radiation */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setActiveLayers(p => ({ ...p, radiation: !p.radiation }))}
+                    className={`p-1 rounded ${activeLayers.radiation ? 'text-purple-400' : 'text-slate-500'}`}
+                  >
+                    {activeLayers.radiation ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                  </button>
+                  <span className="text-slate-200 text-[11px] flex items-center gap-1">
+                    <ShieldAlert className="w-3 h-3 text-purple-400" />
+                    {t.gcrRadiationZone}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0.1"
+                  max="1"
+                  step="0.05"
+                  value={layerOpacity.radiation}
+                  onChange={(e) => setLayerOpacity(p => ({ ...p, radiation: parseFloat(e.target.value) }))}
+                  className="w-16 h-1 bg-slate-700 rounded appearance-none cursor-pointer accent-purple-500"
+                />
+              </div>
+            </div>
+
+            {/* Map Legend Sub-card inside the panel */}
+            <div className="pt-2 border-t border-slate-700/60 text-[10px] font-mono space-y-1 text-slate-300">
+              <div className="font-bold text-slate-400 mb-1">{t.slopeClassification}</div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
+                <span>{t.slopeNominal}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
+                <span>{t.slopeCaution}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" />
+                <span>{t.slopeImpassable}</span>
+              </div>
+              <div className="flex items-center gap-2 pt-1 border-t border-slate-800">
+                <span className="w-2.5 h-2.5 rounded-full bg-fuchsia-500 shrink-0" />
+                <span>{t.boxworkRidgesLegend}</span>
+              </div>
+            </div>
+
           </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-            <span>10° - 18° Slope: Caution (+40% O2)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
-            <span>&gt; 18° Slope: Impassable Cliff/Escarpment</span>
-          </div>
-          <div className="flex items-center gap-2 pt-1 border-t border-slate-700/40">
-            <span className="w-2.5 h-2.5 rounded-full bg-fuchsia-500" />
-            <span>Boxwork Polygonal Ridges (Curiosity 2025)</span>
-          </div>
-        </div>
+        )}
+
       </div>
 
       {/* Top Center: Add Custom Waypoint Mode Banner */}
@@ -609,7 +673,7 @@ export default function MarsMap({
           }`}
         >
           <Plus className="w-4 h-4" />
-          {isAddMode ? 'CLICK MAP TO PLACE WAYPOINT' : '+ ADD CUSTOM WAYPOINT'}
+          {isAddMode ? t.clickMapToPlace : t.addCustomWaypoint}
         </button>
 
         <button
@@ -620,13 +684,13 @@ export default function MarsMap({
             }
           }}
           className="glass-panel border-slate-700 text-slate-300 hover:text-white p-2 rounded-xl transition"
-          title="Recenter Map"
+          title={t.recenterMap}
         >
           <Maximize2 className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Bottom Bar: Live Martian Coordinates & Elevation Readout */}
+      {/* Bottom Bar: Live Martian Coordinates */}
       <div className="absolute bottom-4 left-4 z-10 glass-panel px-3 py-1.5 rounded-lg border border-slate-800 text-[11px] font-mono text-slate-300 flex items-center gap-3">
         <div className="flex items-center gap-1.5 text-mars-orange">
           <Compass className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '30s' }} />
@@ -635,9 +699,8 @@ export default function MarsMap({
         <span>LAT: {mouseCoords.lat >= 0 ? `${mouseCoords.lat}° N` : `${Math.abs(mouseCoords.lat)}° S`}</span>
         <span>LON: {mouseCoords.lng}° E</span>
         <span className="text-slate-500">|</span>
-        <span className="text-emerald-400 font-bold">{zone.name}</span>
+        <span className="text-emerald-400 font-bold">{lang === 'uz' ? (zone.name_uz || zone.name) : zone.name}</span>
       </div>
     </div>
   );
 }
-
