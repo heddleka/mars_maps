@@ -4,7 +4,8 @@ import {
   ExternalLink, 
   RefreshCw, 
   Maximize2, 
-  Calendar
+  Calendar,
+  Search
 } from 'lucide-react';
 import { marsAudio } from '../utils/audioSystem';
 import { TRANSLATIONS } from '../data/translations';
@@ -97,40 +98,45 @@ export default function MarsRawGallery({ zone, lang = 'en' }) {
   const [activePhoto, setActivePhoto] = useState(null);
   const [loading, setLoading] = useState(false);
   const [solFilter, setSolFilter] = useState('');
+  const [searchError, setSearchError] = useState('');
 
-  const fetchLiveNASAImages = async ({ signal, playSound = true } = {}) => {
+  const fetchLiveNASAImages = async ({ signal, playSound = true, sol } = {}) => {
     setLoading(true);
+    setSearchError('');
     if (playSound) marsAudio.playBlip();
 
     const category = selectedRover === 'Curiosity' ? 'msl' : 'mars2020';
-    const endpoint = `https://mars.nasa.gov/rss/api/?feed=raw_images&category=${category}&feedtype=json&num=12&page=0`;
+    const solQuery = sol ? `&sol=${encodeURIComponent(sol)}` : '';
+    const endpoint = `https://mars.nasa.gov/rss/api/?feed=raw_images&category=${category}&feedtype=json&num=12&page=0${solQuery}`;
 
     try {
       const res = await fetch(endpoint, { signal });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.images && data.images.length > 0) {
-          const liveList = data.images.map((img) => ({
-            id: img.imageid || String(img.id),
-            rover: selectedRover,
-            sol: img.sol,
-            camera: img.camera?.full_name || img.camera?.instrument || 'Engineering Navcam',
-            title: `Sol ${img.sol} Raw Surface Exposure`,
-            title_uz: `Sol ${img.sol} Mars Sirti Xom Surati`,
-            desc: `Raw image captured on Mars by ${selectedRover}. UTC: ${img.date_taken_utc || 'Recently received via DSN'}.`,
-            desc_uz: `${selectedRover} tomonidan Marsda olingan haqiqiy xom surat. UTC: ${img.date_taken_utc || 'DSN orqali qabul qilingan'}.`,
-            url: img.image_files?.medium || img.image_files?.small || img.image_files?.large || img.image_files?.full_res,
-            originalUrl: img.image_files?.full_res || img.image_files?.large || img.image_files?.medium || img.image_files?.small,
-            site: lang === 'uz' ? (zone.name_uz || zone.name) : zone.name,
-            coords: `${zone.center[0]}°, ${zone.center[1]}°`
-          })).filter(item => item.url);
-
-          setPhotos([...liveList, ...CURATED_NASA_PHOTOS]);
-        }
+      if (!res.ok) {
+        throw new Error(`NASA raw image request failed (${res.status})`);
       }
+
+      const data = await res.json();
+      const images = Array.isArray(data.images) ? data.images.slice(0, 12) : [];
+      const liveList = images.map((img) => ({
+        id: img.imageid || String(img.id),
+        rover: selectedRover,
+        sol: img.sol,
+        camera: img.camera?.full_name || img.camera?.instrument || 'Engineering Navcam',
+        title: `Sol ${img.sol} Raw Surface Exposure`,
+        title_uz: `Sol ${img.sol} Mars Sirti Xom Surati`,
+        desc: `Raw image captured on Mars by ${selectedRover}. UTC: ${img.date_taken_utc || 'Recently received via DSN'}.`,
+        desc_uz: `${selectedRover} tomonidan Marsda olingan haqiqiy xom surat. UTC: ${img.date_taken_utc || 'DSN orqali qabul qilingan'}.`,
+        url: img.image_files?.medium || img.image_files?.small || img.image_files?.large || img.image_files?.full_res,
+        originalUrl: img.image_files?.full_res || img.image_files?.large || img.image_files?.medium || img.image_files?.small,
+        site: lang === 'uz' ? (zone.name_uz || zone.name) : zone.name,
+        coords: `${zone.center[0]}°, ${zone.center[1]}°`
+      })).filter(item => item.url);
+
+      setPhotos([...liveList, ...CURATED_NASA_PHOTOS]);
     } catch (err) {
       if (!signal?.aborted) {
         console.warn('Using curated NASA raw images archive:', err);
+        if (sol) setSearchError(t.solSearchFailed);
       }
     } finally {
       if (!signal?.aborted) setLoading(false);
@@ -149,9 +155,17 @@ export default function MarsRawGallery({ zone, lang = 'en' }) {
 
   const filteredPhotos = photos.filter(p => {
     const matchRover = p.rover.toLowerCase().includes(selectedRover.toLowerCase());
-    const matchSol = !solFilter || String(p.sol).includes(solFilter);
+    const matchSol = !solFilter || String(p.sol).includes(solFilter.trim());
     return matchRover && matchSol;
   });
+
+  const handleSolSearch = (event) => {
+    event.preventDefault();
+    const sol = solFilter.trim();
+    if (/^\d+$/.test(sol)) {
+      fetchLiveNASAImages({ sol });
+    }
+  };
 
   return (
     <div className="w-full h-full flex flex-col glass-panel p-4 overflow-y-auto space-y-4 text-slate-100">
@@ -190,16 +204,31 @@ export default function MarsRawGallery({ zone, lang = 'en' }) {
             ))}
           </div>
 
-          <div className="flex items-center gap-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs font-mono">
+          <form
+            onSubmit={handleSolSearch}
+            className="flex items-center gap-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs font-mono"
+          >
             <Calendar className="w-3.5 h-3.5 text-slate-400" />
             <input
-              type="text"
+              type="number"
+              min="0"
+              step="1"
+              required
               placeholder={t.filterSolPlaceholder}
               value={solFilter}
               onChange={(e) => setSolFilter(e.target.value)}
               className="w-24 bg-transparent text-white focus:outline-none placeholder:text-slate-500"
             />
-          </div>
+            <button
+              type="submit"
+              aria-label={t.searchSol}
+              title={t.searchSol}
+              disabled={loading}
+              className="text-cyan-400 hover:text-white disabled:opacity-50"
+            >
+              <Search className="w-3.5 h-3.5" />
+            </button>
+          </form>
 
           <button
             onClick={fetchLiveNASAImages}
@@ -214,7 +243,15 @@ export default function MarsRawGallery({ zone, lang = 'en' }) {
 
       {/* 2. Photo Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {filteredPhotos.map((photo) => {
+        {searchError ? (
+          <p role="alert" className="col-span-full py-8 text-center text-sm text-red-300">
+            {searchError}
+          </p>
+        ) : filteredPhotos.length === 0 ? (
+          <p className="col-span-full py-8 text-center text-sm text-slate-400">
+            {loading ? t.receivingDsn : t.noPhotosFound}
+          </p>
+        ) : filteredPhotos.map((photo) => {
           const photoTitle = lang === 'uz' ? (photo.title_uz || photo.title) : photo.title;
           const photoDesc = lang === 'uz' ? (photo.desc_uz || photo.desc) : photo.desc;
 
