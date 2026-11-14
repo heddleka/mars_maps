@@ -103,7 +103,10 @@ export const TRANSLATIONS = {
     // Raw Photos Gallery
     rawGalleryTitle: "NASA Raw Surface Imagery & POV Gallery",
     rawGallerySubtitle: "Real-time feed from NASA Mars 2020 & Curiosity Raw Image Archives (Over 1.18 Million Photos on Record).",
-    filterSolPlaceholder: "Filter Sol...",
+    filterSolPlaceholder: "Search by Sol...",
+    searchSol: "Search",
+    noPhotosFound: "No photos found for this Sol.",
+    solSearchFailed: "Could not load photos for this Sol. Try again.",
     fetchLiveDsn: "Fetch Live DSN Feed",
     receivingDsn: "Receiving DSN...",
     inspectTelemetry: "Inspect Telemetry",
@@ -233,7 +236,10 @@ export const TRANSLATIONS = {
     // Raw Photos Gallery
     rawGalleryTitle: "NASA Haqiqiy Sirt Suratlari Galereyasi",
     rawGallerySubtitle: "NASA Mars 2020 va Curiosity roverlarining jonli arxiv suratlari (1.18 milliondan ziyod rasm).",
-    filterSolPlaceholder: "Sol bo'yicha filter...",
+    filterSolPlaceholder: "Sol bo'yicha qidirish...",
+    searchSol: "Qidirish",
+    noPhotosFound: "Bu Sol uchun surat topilmadi.",
+    solSearchFailed: "Bu Sol suratlarini yuklab bo'lmadi. Qayta urinib ko'ring.",
     fetchLiveDsn: "Jonli DSN Oqimini Yuklash",
     receivingDsn: "DSN ulanmoqda...",
     inspectTelemetry: "Telemetriyani Ko'rish",
