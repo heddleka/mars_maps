@@ -19,6 +19,44 @@ import {
 import { marsAudio } from '../utils/audioSystem';
 import { TRANSLATIONS } from '../data/translations';
 
+const MARS_CRS = L.extend({}, L.CRS, {
+  projection: L.Projection.LonLat,
+  transformation: new L.Transformation(1 / 180, 1, -1 / 180, 0.5),
+  scale: (zoom) => 256 * Math.pow(2, zoom),
+  zoom: (scale) => Math.log(scale / 256) / Math.LN2,
+  wrapLng: [-180, 180]
+});
+
+const createMarsTrekLayer = (product, format, maxNativeZoom, attribution) =>
+  L.tileLayer(
+    `https://trek.nasa.gov/tiles/Mars/EQ/${product}/1.0.0//default/default028mm/{z}/{y}/{x}.${format}`,
+    { maxZoom: 13, maxNativeZoom, attribution }
+  );
+
+const createVikingLayer = () => {
+  const layer = L.TileLayer.extend({
+    getTileUrl(coords) {
+      const bounds = this._tileCoordsToBounds(coords);
+      const size = this.getTileSize();
+      const params = new URLSearchParams({
+        bbox: bounds.toBBoxString(),
+        bboxSR: '104905',
+        imageSR: '104905',
+        size: `${size.x},${size.y}`,
+        format: 'jpgpng',
+        f: 'image'
+      });
+
+      return `https://trek.nasa.gov/mars/trekarcgis/rest/services/Mars_Viking_MDIM21_ClrMosaic_global_232m/ImageServer/exportImage?${params}`;
+    }
+  });
+
+  return new layer('', {
+    maxZoom: 13,
+    attribution: 'NASA/USGS Viking MDIM 2.1 Color Mosaic'
+  });
+};
+
 export default function MarsMap({ 
   zone, 
   waypoints, 
@@ -54,20 +92,6 @@ export default function MarsMap({
   });
   const [mouseCoords, setMouseCoords] = useState({ lat: 0, lng: 0 });
 
-  // Convert (x, y, z) to Google Mars Quadkey for seamless worldwide coverage
-  const toQuadKey = (x, y, z) => {
-    const chars = ['q', 'r', 't', 's'];
-    let key = 't';
-    for (let i = z; i > 0; i--) {
-      let digit = 0;
-      const mask = 1 << (i - 1);
-      if ((x & mask) !== 0) digit += 1;
-      if ((y & mask) !== 0) digit += 2;
-      key += chars[digit];
-    }
-    return key;
-  };
-
   // 1. Initialize Map
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -78,9 +102,10 @@ export default function MarsMap({
 
     const map = L.map(mapContainerRef.current, {
       center: zone.center,
-      zoom: zone.zoom,
-      minZoom: 3,
-      maxZoom: 14,
+      zoom: zone.zoom - 1,
+      minZoom: 2,
+      maxZoom: 13,
+      crs: MARS_CRS,
       zoomControl: false,
       attributionControl: false
     });
@@ -153,54 +178,24 @@ export default function MarsMap({
     }
     layersGroupRef.current.baseTile = null;
 
-    if (baseMap === 'mola') {
-      const QuadElevationLayer = L.TileLayer.extend({
-        getTileUrl: function(coords) {
-          const qk = toQuadKey(coords.x, coords.y, coords.z);
-          return `https://mw1.google.com/mw-planetary/mars/elevation/${qk}.jpg`;
-        }
-      });
-      const baseLow = new QuadElevationLayer('', {
-        maxZoom: 14,
-        maxNativeZoom: 7,
-        errorTileUrl: 'https://mw1.google.com/mw-planetary/mars/elevation/t.jpg',
-        attribution: 'NASA/GSFC MOLA Elevation'
-      });
-      baseLow.addTo(map);
-      layersGroupRef.current.baseTile = baseLow;
+    const baseTile = baseMap === 'mola'
+      ? createMarsTrekLayer(
+          'Mars_MGS_MOLA_ClrShade_merge_global_463m',
+          'jpg',
+          7,
+          'NASA/GSFC MOLA Color Hillshade'
+        )
+      : baseMap === 'viking'
+        ? createVikingLayer()
+        : createMarsTrekLayer(
+            'THEMIS_DayIR_ControlledMosaics_100m_v2_oct2018',
+            'png',
+            9,
+            'NASA/JPL-Caltech/ASU THEMIS Day IR Mosaic'
+          );
 
-    } else if (baseMap === 'viking') {
-      const QuadVikingLayer = L.TileLayer.extend({
-        getTileUrl: function(coords) {
-          const qk = toQuadKey(coords.x, coords.y, coords.z);
-          return `https://mw1.google.com/mw-planetary/mars/visible/${qk}.jpg`;
-        }
-      });
-      const baseLow = new QuadVikingLayer('', {
-        maxZoom: 14,
-        maxNativeZoom: 7,
-        errorTileUrl: 'https://mw1.google.com/mw-planetary/mars/visible/t.jpg',
-        attribution: 'NASA/USGS Viking Color Mosaic'
-      });
-      baseLow.addTo(map);
-      layersGroupRef.current.baseTile = baseLow;
-
-    } else if (baseMap === 'themis') {
-      const QuadThemisLayer = L.TileLayer.extend({
-        getTileUrl: function(coords) {
-          const qk = toQuadKey(coords.x, coords.y, coords.z);
-          return `https://mw1.google.com/mw-planetary/mars/infrared/${qk}.jpg`;
-        }
-      });
-      const baseLow = new QuadThemisLayer('', {
-        maxZoom: 14,
-        maxNativeZoom: 7,
-        errorTileUrl: 'https://mw1.google.com/mw-planetary/mars/infrared/t.jpg',
-        attribution: 'NASA/ASU THEMIS Infrared'
-      });
-      baseLow.addTo(map);
-      layersGroupRef.current.baseTile = baseLow;
-    }
+    baseTile.addTo(map);
+    layersGroupRef.current.baseTile = baseTile;
   }, [baseMap, zone.id]);
 
   // 3. Render Scientific Overlays (Slope Hazards, Minerals, Thermal Sand Traps)
@@ -681,7 +676,7 @@ export default function MarsMap({
         <button
           onClick={() => {
             if (mapRef.current) {
-              mapRef.current.setView(zone.center, zone.zoom);
+              mapRef.current.setView(zone.center, zone.zoom - 1);
               marsAudio.playBlip();
             }
           }}
