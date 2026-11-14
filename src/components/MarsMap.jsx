@@ -142,10 +142,7 @@ export default function MarsMap({
     };
   }, [zone.id]);
 
-  // 2. Update Base Tile Layer — multi-source strategy for maximum sharpness at all zoom levels
-  //    Low zoom  (z≤7):  Google Mars quadkey tiles (global color/elevation coverage)
-  //    High zoom (z≥8):  ESRI ArcGIS Online CTX Mosaic (6m/pixel, z6–z12 verified working)
-  //    THEMIS: Google IR for color context (z≤7) + CTX for high-res detail (z≥8)
+  // 2. Update the selected planetary base tile layer.
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -154,25 +151,9 @@ export default function MarsMap({
     if (layersGroupRef.current.baseTile) {
       map.removeLayer(layersGroupRef.current.baseTile);
     }
-    if (layersGroupRef.current.baseTileHiRes) {
-      map.removeLayer(layersGroupRef.current.baseTileHiRes);
-    }
-
-    // ── ESRI ArcGIS CTX high-res layer (z6–z12, ~6m/pixel, NASA MRO CTX camera)
-    // Works perfectly for all 3 basemap modes as a crisp high-zoom layer
-    const ctxHiRes = L.tileLayer(
-      'https://astro.arcgis.com/arcgis/rest/services/OnMars/CTX/MapServer/tile/{z}/{y}/{x}',
-      {
-        maxZoom: 14,
-        maxNativeZoom: 12,
-        minZoom: 6,
-        opacity: 1,
-        attribution: 'NASA/MRO CTX Mosaic via ESRI ArcGIS'
-      }
-    );
+    layersGroupRef.current.baseTile = null;
 
     if (baseMap === 'mola') {
-      // MOLA Elevation: Google quadkey for global color (z≤7), CTX for crisp high-res (z≥8)
       const QuadElevationLayer = L.TileLayer.extend({
         getTileUrl: function(coords) {
           const qk = toQuadKey(coords.x, coords.y, coords.z);
@@ -186,12 +167,9 @@ export default function MarsMap({
         attribution: 'NASA/GSFC MOLA Elevation'
       });
       baseLow.addTo(map);
-      ctxHiRes.addTo(map);
       layersGroupRef.current.baseTile = baseLow;
-      layersGroupRef.current.baseTileHiRes = ctxHiRes;
 
     } else if (baseMap === 'viking') {
-      // Viking Color Mosaic: Google quadkey for color (z≤7), CTX detail on top (z≥8)
       const QuadVikingLayer = L.TileLayer.extend({
         getTileUrl: function(coords) {
           const qk = toQuadKey(coords.x, coords.y, coords.z);
@@ -205,12 +183,9 @@ export default function MarsMap({
         attribution: 'NASA/USGS Viking Color Mosaic'
       });
       baseLow.addTo(map);
-      ctxHiRes.addTo(map);
       layersGroupRef.current.baseTile = baseLow;
-      layersGroupRef.current.baseTileHiRes = ctxHiRes;
 
     } else if (baseMap === 'themis') {
-      // THEMIS IR: Google IR for thermal color context (z≤7), CTX for crisp detail (z≥8)
       const QuadThemisLayer = L.TileLayer.extend({
         getTileUrl: function(coords) {
           const qk = toQuadKey(coords.x, coords.y, coords.z);
@@ -224,11 +199,9 @@ export default function MarsMap({
         attribution: 'NASA/ASU THEMIS Infrared'
       });
       baseLow.addTo(map);
-      ctxHiRes.addTo(map);
       layersGroupRef.current.baseTile = baseLow;
-      layersGroupRef.current.baseTileHiRes = ctxHiRes;
     }
-  }, [baseMap]);
+  }, [baseMap, zone.id]);
 
   // 3. Render Scientific Overlays (Slope Hazards, Minerals, Thermal Sand Traps)
   useEffect(() => {
