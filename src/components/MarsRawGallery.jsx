@@ -98,15 +98,15 @@ export default function MarsRawGallery({ zone, lang = 'en' }) {
   const [loading, setLoading] = useState(false);
   const [solFilter, setSolFilter] = useState('');
 
-  const fetchLiveNASAImages = async () => {
+  const fetchLiveNASAImages = async ({ signal, playSound = true } = {}) => {
     setLoading(true);
-    marsAudio.playBlip();
+    if (playSound) marsAudio.playBlip();
 
     const category = selectedRover === 'Curiosity' ? 'msl' : 'mars2020';
     const endpoint = `https://mars.nasa.gov/rss/api/?feed=raw_images&category=${category}&feedtype=json&num=12&page=0`;
 
     try {
-      const res = await fetch(endpoint);
+      const res = await fetch(endpoint, { signal });
       if (res.ok) {
         const data = await res.json();
         if (data.images && data.images.length > 0) {
@@ -119,7 +119,8 @@ export default function MarsRawGallery({ zone, lang = 'en' }) {
             title_uz: `Sol ${img.sol} Mars Sirti Xom Surati`,
             desc: `Raw image captured on Mars by ${selectedRover}. UTC: ${img.date_taken_utc || 'Recently received via DSN'}.`,
             desc_uz: `${selectedRover} tomonidan Marsda olingan haqiqiy xom surat. UTC: ${img.date_taken_utc || 'DSN orqali qabul qilingan'}.`,
-            url: img.image_files?.full_res || img.image_files?.large || img.image_files?.medium,
+            url: img.image_files?.medium || img.image_files?.small || img.image_files?.large || img.image_files?.full_res,
+            originalUrl: img.image_files?.full_res || img.image_files?.large || img.image_files?.medium || img.image_files?.small,
             site: lang === 'uz' ? (zone.name_uz || zone.name) : zone.name,
             coords: `${zone.center[0]}°, ${zone.center[1]}°`
           })).filter(item => item.url);
@@ -128,11 +129,19 @@ export default function MarsRawGallery({ zone, lang = 'en' }) {
         }
       }
     } catch (err) {
-      console.warn('Using curated NASA raw images archive:', err);
+      if (!signal?.aborted) {
+        console.warn('Using curated NASA raw images archive:', err);
+      }
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchLiveNASAImages({ signal: controller.signal, playSound: false });
+    return () => controller.abort();
+  }, [selectedRover]);
 
   useEffect(() => {
     setSelectedRover(zone.id === 'gale' ? 'Curiosity' : 'Perseverance');
@@ -294,7 +303,7 @@ export default function MarsRawGallery({ zone, lang = 'en' }) {
 
             <div className="flex-1 bg-black overflow-auto flex items-center justify-center p-2 min-h-[350px]">
               <img
-                src={activePhoto.url}
+                src={activePhoto.originalUrl || activePhoto.url}
                 alt={activePhoto.title}
                 className="max-h-[60vh] max-w-full object-contain rounded-lg"
               />
