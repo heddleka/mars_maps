@@ -36,7 +36,7 @@ export default function MarsMap({
   const layersGroupRef = useRef({});
 
   // Active Map Layer States
-  const [baseMap, setBaseMap] = useState('mola'); // 'mola', 'viking', 'themis', 'trek'
+  const [baseMap, setBaseMap] = useState('viking'); // 'mola', 'viking', 'themis', 'trek'
   const [isLayersOpen, setIsLayersOpen] = useState(false); // Toggle state for the layers drawer!
   const [layerOpacity, setLayerOpacity] = useState({
     slopeHazard: 0.75,
@@ -520,8 +520,8 @@ export default function MarsMap({
               <label className="text-[10px] font-mono text-slate-400 block mb-1">{t.baseTileset}</label>
               <div className="grid grid-cols-3 gap-1">
                 {[
-                  { id: 'mola', label: 'MOLA DEM' },
                   { id: 'viking', label: 'Viking Color' },
+                  { id: 'mola', label: 'MOLA DEM' },
                   { id: 'themis', label: 'THEMIS IR' }
                 ].map(b => (
                   <button
