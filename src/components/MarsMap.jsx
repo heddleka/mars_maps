@@ -19,44 +19,6 @@ import {
 import { marsAudio } from '../utils/audioSystem';
 import { TRANSLATIONS } from '../data/translations';
 
-const MARS_CRS = L.extend({}, L.CRS, {
-  projection: L.Projection.LonLat,
-  transformation: new L.Transformation(1 / 180, 1, -1 / 180, 0.5),
-  scale: (zoom) => 256 * Math.pow(2, zoom),
-  zoom: (scale) => Math.log(scale / 256) / Math.LN2,
-  wrapLng: [-180, 180]
-});
-
-const createMarsTrekLayer = (product, format, maxNativeZoom, attribution, minZoom = 2) =>
-  L.tileLayer(
-    `https://trek.nasa.gov/tiles/Mars/EQ/${product}/1.0.0//default/default028mm/{z}/{y}/{x}.${format}`,
-    { minZoom, maxZoom: 13, maxNativeZoom, attribution }
-  );
-
-const createVikingLayer = () => {
-  const layer = L.TileLayer.extend({
-    getTileUrl(coords) {
-      const bounds = this._tileCoordsToBounds(coords);
-      const size = this.getTileSize();
-      const params = new URLSearchParams({
-        bbox: bounds.toBBoxString(),
-        bboxSR: '104905',
-        imageSR: '104905',
-        size: `${size.x},${size.y}`,
-        format: 'jpgpng',
-        f: 'image'
-      });
-
-      return `https://trek.nasa.gov/mars/trekarcgis/rest/services/Mars_Viking_MDIM21_ClrMosaic_global_232m/ImageServer/exportImage?${params}`;
-    }
-  });
-
-  return new layer('', {
-    maxZoom: 13,
-    attribution: 'NASA/USGS Viking MDIM 2.1 Color Mosaic'
-  });
-};
-
 export default function MarsMap({ 
   zone, 
   waypoints, 
@@ -72,8 +34,6 @@ export default function MarsMap({
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const layersGroupRef = useRef({});
-  const mapInteractionRef = useRef({});
-  mapInteractionRef.current = { waypoints, onAddWaypoint, isAddMode };
 
   // Active Map Layer States
   const [baseMap, setBaseMap] = useState('mola'); // 'mola', 'viking', 'themis', 'trek'
@@ -94,6 +54,20 @@ export default function MarsMap({
   });
   const [mouseCoords, setMouseCoords] = useState({ lat: 0, lng: 0 });
 
+  // Convert (x, y, z) to Google Mars Quadkey for seamless worldwide coverage
+  const toQuadKey = (x, y, z) => {
+    const chars = ['q', 'r', 't', 's'];
+    let key = 't';
+    for (let i = z; i > 0; i--) {
+      let digit = 0;
+      const mask = 1 << (i - 1);
+      if ((x & mask) !== 0) digit += 1;
+      if ((y & mask) !== 0) digit += 2;
+      key += chars[digit];
+    }
+    return key;
+  };
+
   // 1. Initialize Map
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -104,10 +78,9 @@ export default function MarsMap({
 
     const map = L.map(mapContainerRef.current, {
       center: zone.center,
-      zoom: zone.zoom - 1,
-      minZoom: 2,
-      maxZoom: 13,
-      crs: MARS_CRS,
+      zoom: zone.zoom,
+      minZoom: 3,
+      maxZoom: 14,
       zoomControl: false,
       attributionControl: false
     });
@@ -126,7 +99,6 @@ export default function MarsMap({
 
     // Map click handler for adding custom waypoints
     map.on('click', (e) => {
-      const { waypoints, onAddWaypoint, isAddMode } = mapInteractionRef.current;
       if (isAddMode && onAddWaypoint) {
         const wpNum = waypoints.length + 1;
         onAddWaypoint({
@@ -168,19 +140,12 @@ export default function MarsMap({
       map.remove();
       mapRef.current = null;
     };
-  }, []);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-
-    map.setView(zone.center, zone.zoom - 1, { animate: false });
-    const frame = requestAnimationFrame(() => map.invalidateSize({ pan: false }));
-
-    return () => cancelAnimationFrame(frame);
   }, [zone.id]);
 
-  // 2. Update the selected planetary base tile layer.
+  // 2. Update Base Tile Layer — multi-source strategy for maximum sharpness at all zoom levels
+  //    Low zoom  (z≤7):  Google Mars quadkey tiles (global color/elevation coverage)
+  //    High zoom (z≥8):  ESRI ArcGIS Online CTX Mosaic (6m/pixel, z6–z12 verified working)
+  //    THEMIS: Google IR for color context (z≤7) + CTX for high-res detail (z≥8)
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -189,27 +154,86 @@ export default function MarsMap({
     if (layersGroupRef.current.baseTile) {
       map.removeLayer(layersGroupRef.current.baseTile);
     }
-    layersGroupRef.current.baseTile = null;
+    if (layersGroupRef.current.baseTileHiRes) {
+      map.removeLayer(layersGroupRef.current.baseTileHiRes);
+    }
 
-    const baseTile = baseMap === 'mola'
-      ? createMarsTrekLayer(
-          'Mars_MGS_MOLA_ClrShade_merge_global_463m',
-          'jpg',
-          7,
-          'NASA/GSFC MOLA Color Hillshade'
-        )
-      : baseMap === 'viking'
-        ? createVikingLayer()
-        : createMarsTrekLayer(
-            'THEMIS_DayIR_ControlledMosaics_100m_v2_oct2018',
-            'png',
-            9,
-            'NASA/JPL-Caltech/ASU THEMIS Day IR Mosaic'
-          );
+    // ── ESRI ArcGIS CTX high-res layer (z6–z12, ~6m/pixel, NASA MRO CTX camera)
+    // Works perfectly for all 3 basemap modes as a crisp high-zoom layer
+    const ctxHiRes = L.tileLayer(
+      'https://astro.arcgis.com/arcgis/rest/services/OnMars/CTX/MapServer/tile/{z}/{y}/{x}',
+      {
+        maxZoom: 14,
+        maxNativeZoom: 12,
+        minZoom: 6,
+        opacity: 1,
+        attribution: 'NASA/MRO CTX Mosaic via ESRI ArcGIS'
+      }
+    );
 
-    baseTile.addTo(map);
-    layersGroupRef.current.baseTile = baseTile;
-  }, [baseMap, zone.id]);
+    if (baseMap === 'mola') {
+      // MOLA Elevation: Google quadkey for global color (z≤7), CTX for crisp high-res (z≥8)
+      const QuadElevationLayer = L.TileLayer.extend({
+        getTileUrl: function(coords) {
+          const qk = toQuadKey(coords.x, coords.y, coords.z);
+          return `https://mw1.google.com/mw-planetary/mars/elevation/${qk}.jpg`;
+        }
+      });
+      const baseLow = new QuadElevationLayer('', {
+        maxZoom: 14,
+        maxNativeZoom: 7,
+        errorTileUrl: 'https://mw1.google.com/mw-planetary/mars/elevation/t.jpg',
+        attribution: 'NASA/GSFC MOLA Elevation'
+      });
+      baseLow.addTo(map);
+      ctxHiRes.addTo(map);
+      layersGroupRef.current.baseTile = baseLow;
+      layersGroupRef.current.baseTileHiRes = ctxHiRes;
+
+    } else if (baseMap === 'viking') {
+      // Use NASA Trek's Viking RGB mosaic directly and keep the CTX overlay off this mode.
+      const QuadVikingLayer = L.TileLayer.extend({
+        getTileUrl: function(coords) {
+          const bounds = this._tileCoordsToBounds(coords);
+          const tileSize = this.getTileSize();
+          const params = new URLSearchParams({
+            bbox: bounds.toBBoxString(),
+            bboxSR: '104905',
+            imageSR: '104905',
+            size: `${tileSize.x},${tileSize.y}`,
+            format: 'jpgpng',
+            f: 'image'
+          });
+          return `https://trek.nasa.gov/mars/trekarcgis/rest/services/Mars_Viking_MDIM21_ClrMosaic_global_232m/ImageServer/exportImage?${params}`;
+        }
+      });
+      const baseLow = new QuadVikingLayer('', {
+        maxZoom: 14,
+        attribution: 'NASA/USGS Viking Color Mosaic'
+      });
+      baseLow.addTo(map);
+      layersGroupRef.current.baseTile = baseLow;
+
+    } else if (baseMap === 'themis') {
+      // THEMIS IR: Google IR for thermal color context (z≤7), CTX for crisp detail (z≥8)
+      const QuadThemisLayer = L.TileLayer.extend({
+        getTileUrl: function(coords) {
+          const qk = toQuadKey(coords.x, coords.y, coords.z);
+          return `https://mw1.google.com/mw-planetary/mars/infrared/${qk}.jpg`;
+        }
+      });
+      const baseLow = new QuadThemisLayer('', {
+        maxZoom: 14,
+        maxNativeZoom: 7,
+        errorTileUrl: 'https://mw1.google.com/mw-planetary/mars/infrared/t.jpg',
+        attribution: 'NASA/ASU THEMIS Infrared'
+      });
+      baseLow.addTo(map);
+      ctxHiRes.addTo(map);
+      layersGroupRef.current.baseTile = baseLow;
+      layersGroupRef.current.baseTileHiRes = ctxHiRes;
+    }
+  }, [baseMap]);
 
   // 3. Render Scientific Overlays (Slope Hazards, Minerals, Thermal Sand Traps)
   useEffect(() => {
@@ -262,6 +286,7 @@ export default function MarsMap({
           weight: 2,
           dashArray: '4, 4'
         });
+        poly.bindTooltip(`<b>${sz.label}</b><br/>${sz.desc}`, { sticky: true });
         layersGroupRef.current.slopeHazard.addLayer(poly);
       });
     }
@@ -306,6 +331,7 @@ export default function MarsMap({
           fillOpacity: layerOpacity.mineralogy * 0.4,
           weight: 2
         });
+        circle.bindTooltip(`<b>${mf.label}</b><br/>${mf.desc}`, { sticky: true });
         layersGroupRef.current.mineralogy.addLayer(circle);
       });
     }
@@ -333,6 +359,7 @@ export default function MarsMap({
           weight: 2,
           dashArray: '6, 6'
         });
+        circle.bindTooltip(`<b>${st.label}</b><br/>${st.desc}`, { sticky: true });
         layersGroupRef.current.thermalInertia.addLayer(circle);
       });
     }
@@ -354,6 +381,7 @@ export default function MarsMap({
           weight: 1,
           dashArray: '3, 6'
         });
+        ring.bindTooltip(`${t.elevationContours}: ${cr.label}`, { sticky: true });
         layersGroupRef.current.contours.addLayer(ring);
       });
     }
@@ -368,6 +396,7 @@ export default function MarsMap({
         weight: 1,
         dashArray: '8, 8'
       });
+      radZone.bindTooltip(lang === 'uz' ? 'GCR Kosmik Nurlar Maydoni (0.26 mSv/kun)' : 'Galactic Cosmic Ray Exposure Zone (0.26 mSv/day)', { sticky: true });
       layersGroupRef.current.radiation.addLayer(radZone);
     }
 
@@ -390,6 +419,7 @@ export default function MarsMap({
       opacity: 0.9,
       dashArray: '8, 6'
     });
+    routeLine.bindTooltip(`${waypoints.length} ${lang === 'uz' ? 'nuqta belgilangan' : 'waypoints planned'}`, { sticky: true });
     layersGroupRef.current.routes.addLayer(routeLine);
 
     waypoints.forEach((wp, index) => {
@@ -683,7 +713,7 @@ export default function MarsMap({
         <button
           onClick={() => {
             if (mapRef.current) {
-              mapRef.current.setView(zone.center, zone.zoom - 1);
+              mapRef.current.setView(zone.center, zone.zoom);
               marsAudio.playBlip();
             }
           }}
