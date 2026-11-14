@@ -27,10 +27,10 @@ const MARS_CRS = L.extend({}, L.CRS, {
   wrapLng: [-180, 180]
 });
 
-const createMarsTrekLayer = (product, format, maxNativeZoom, attribution) =>
+const createMarsTrekLayer = (product, format, maxNativeZoom, attribution, minZoom = 2) =>
   L.tileLayer(
     `https://trek.nasa.gov/tiles/Mars/EQ/${product}/1.0.0//default/default028mm/{z}/{y}/{x}.${format}`,
-    { maxZoom: 13, maxNativeZoom, attribution }
+    { minZoom, maxZoom: 13, maxNativeZoom, attribution }
   );
 
 const createVikingLayer = () => {
@@ -72,6 +72,8 @@ export default function MarsMap({
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const layersGroupRef = useRef({});
+  const mapInteractionRef = useRef({});
+  mapInteractionRef.current = { waypoints, onAddWaypoint, isAddMode };
 
   // Active Map Layer States
   const [baseMap, setBaseMap] = useState('mola'); // 'mola', 'viking', 'themis', 'trek'
@@ -124,6 +126,7 @@ export default function MarsMap({
 
     // Map click handler for adding custom waypoints
     map.on('click', (e) => {
+      const { waypoints, onAddWaypoint, isAddMode } = mapInteractionRef.current;
       if (isAddMode && onAddWaypoint) {
         const wpNum = waypoints.length + 1;
         onAddWaypoint({
@@ -165,6 +168,16 @@ export default function MarsMap({
       map.remove();
       mapRef.current = null;
     };
+  }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    map.setView(zone.center, zone.zoom - 1, { animate: false });
+    const frame = requestAnimationFrame(() => map.invalidateSize({ pan: false }));
+
+    return () => cancelAnimationFrame(frame);
   }, [zone.id]);
 
   // 2. Update the selected planetary base tile layer.
@@ -176,7 +189,11 @@ export default function MarsMap({
     if (layersGroupRef.current.baseTile) {
       map.removeLayer(layersGroupRef.current.baseTile);
     }
+    if (layersGroupRef.current.detailTile) {
+      map.removeLayer(layersGroupRef.current.detailTile);
+    }
     layersGroupRef.current.baseTile = null;
+    layersGroupRef.current.detailTile = null;
 
     const baseTile = baseMap === 'mola'
       ? createMarsTrekLayer(
@@ -196,6 +213,17 @@ export default function MarsMap({
 
     baseTile.addTo(map);
     layersGroupRef.current.baseTile = baseTile;
+
+    const detailTile = createMarsTrekLayer(
+      zone.id === 'gale' ? 'Gale_CTX_BlockAdj_dd' : 'JEZ_ctx_B_soc_008_orthoMosaic_6m_Eqc_latTs0_lon0',
+      'png',
+      zone.id === 'gale' ? 12 : 13,
+      'NASA/JPL-Caltech/MSSS CTX Mosaic',
+      7
+    );
+    detailTile.setOpacity(0.4);
+    detailTile.addTo(map);
+    layersGroupRef.current.detailTile = detailTile;
   }, [baseMap, zone.id]);
 
   // 3. Render Scientific Overlays (Slope Hazards, Minerals, Thermal Sand Traps)
@@ -249,7 +277,6 @@ export default function MarsMap({
           weight: 2,
           dashArray: '4, 4'
         });
-        poly.bindTooltip(`<b>${sz.label}</b><br/>${sz.desc}`, { sticky: true });
         layersGroupRef.current.slopeHazard.addLayer(poly);
       });
     }
@@ -294,7 +321,6 @@ export default function MarsMap({
           fillOpacity: layerOpacity.mineralogy * 0.4,
           weight: 2
         });
-        circle.bindTooltip(`<b>${mf.label}</b><br/>${mf.desc}`, { sticky: true });
         layersGroupRef.current.mineralogy.addLayer(circle);
       });
     }
@@ -322,7 +348,6 @@ export default function MarsMap({
           weight: 2,
           dashArray: '6, 6'
         });
-        circle.bindTooltip(`<b>${st.label}</b><br/>${st.desc}`, { sticky: true });
         layersGroupRef.current.thermalInertia.addLayer(circle);
       });
     }
@@ -344,7 +369,6 @@ export default function MarsMap({
           weight: 1,
           dashArray: '3, 6'
         });
-        ring.bindTooltip(`${t.elevationContours}: ${cr.label}`, { sticky: true });
         layersGroupRef.current.contours.addLayer(ring);
       });
     }
@@ -359,7 +383,6 @@ export default function MarsMap({
         weight: 1,
         dashArray: '8, 8'
       });
-      radZone.bindTooltip(lang === 'uz' ? 'GCR Kosmik Nurlar Maydoni (0.26 mSv/kun)' : 'Galactic Cosmic Ray Exposure Zone (0.26 mSv/day)', { sticky: true });
       layersGroupRef.current.radiation.addLayer(radZone);
     }
 
@@ -382,7 +405,6 @@ export default function MarsMap({
       opacity: 0.9,
       dashArray: '8, 6'
     });
-    routeLine.bindTooltip(`${waypoints.length} ${lang === 'uz' ? 'nuqta belgilangan' : 'waypoints planned'}`, { sticky: true });
     layersGroupRef.current.routes.addLayer(routeLine);
 
     waypoints.forEach((wp, index) => {
