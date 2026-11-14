@@ -24,7 +24,7 @@ import { TRANSLATIONS } from './data/translations';
 
 export default function App() {
   // Language State: 'uz' (Uzbek) or 'en' (English)
-  const [lang, setLang] = useState('uz');
+  const [lang, setLang] = useState('en');
   const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
 
   // View Mode: 'map', 'hud', 'gallery' (3D globe removed as requested)
