@@ -27,10 +27,10 @@ const MARS_CRS = L.extend({}, L.CRS, {
   wrapLng: [-180, 180]
 });
 
-const createMarsTrekLayer = (product, format, maxNativeZoom, attribution, minZoom = 2) =>
+const createMarsTrekLayer = (product, format, maxNativeZoom, attribution, minZoom = 2, className) =>
   L.tileLayer(
     `https://trek.nasa.gov/tiles/Mars/EQ/${product}/1.0.0//default/default028mm/{z}/{y}/{x}.${format}`,
-    { minZoom, maxZoom: 13, maxNativeZoom, attribution }
+    { minZoom, maxZoom: 13, maxNativeZoom, attribution, className }
   );
 
 const createVikingLayer = () => {
@@ -214,16 +214,19 @@ export default function MarsMap({
     baseTile.addTo(map);
     layersGroupRef.current.baseTile = baseTile;
 
-    const detailTile = createMarsTrekLayer(
-      zone.id === 'gale' ? 'Gale_CTX_BlockAdj_dd' : 'JEZ_ctx_B_soc_008_orthoMosaic_6m_Eqc_latTs0_lon0',
-      'png',
-      zone.id === 'gale' ? 12 : 13,
-      'NASA/JPL-Caltech/MSSS CTX Mosaic',
-      7
-    );
-    detailTile.setOpacity(0.4);
-    detailTile.addTo(map);
-    layersGroupRef.current.detailTile = detailTile;
+    if (baseMap !== 'themis') {
+      const detailTile = createMarsTrekLayer(
+        zone.id === 'gale' ? 'Gale_CTX_BlockAdj_dd' : 'JEZ_ctx_B_soc_008_orthoMosaic_6m_Eqc_latTs0_lon0',
+        'png',
+        zone.id === 'gale' ? 12 : 13,
+        'NASA/JPL-Caltech/MSSS CTX Mosaic',
+        7,
+        'mars-detail-tile'
+      );
+      detailTile.setOpacity(0.55);
+      detailTile.addTo(map);
+      layersGroupRef.current.detailTile = detailTile;
+    }
   }, [baseMap, zone.id]);
 
   // 3. Render Scientific Overlays (Slope Hazards, Minerals, Thermal Sand Traps)
