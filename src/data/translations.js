@@ -187,7 +187,7 @@ export const TRANSLATIONS = {
 
     // Mission Planner & Consumables
     humanExplorationProgram: "NASA INSONLI TADQIQOTLAR DASTURI",
-    launchVisorHud: "Kaska HUD Rejimini Yoqish",
+    launchVisorHud: "Kaska HUD'ini yoqish",
     exportPlan: "Rejani Yuklab Olish",
     traverseDistance: "MARSHRUT MASOFASI",
     estEvaTime: "TAXMINIY VAQT",

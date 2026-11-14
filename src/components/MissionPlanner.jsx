@@ -130,47 +130,47 @@ SAFETY CONTINGENCY PROTOCOL:
   return (
     <div className="w-full h-full flex flex-col glass-panel p-4 overflow-y-auto space-y-4 text-slate-100">
       {/* 1. Header & Expedition Selector */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between pb-3 border-b border-slate-700/80 gap-3">
-        <div>
+      <div className="flex flex-col items-stretch pb-3 border-b border-slate-700/80 gap-3">
+        <div className="min-w-0">
           <span className="text-[10px] font-mono text-mars-orange bg-mars-orange/20 px-2 py-0.5 rounded border border-mars-orange/30">
             {t.humanExplorationProgram}
           </span>
-          <h1 className="text-base font-orbitron font-bold text-white mt-1">
+          <h1 className="text-base font-orbitron font-bold text-white mt-1 break-words">
             {missionTitle}
           </h1>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-400 mt-0.5 break-words">
             {leadExplorer} • Sol {selectedMission.sol}
           </p>
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <button
             onClick={onOpenHUD}
-            className="px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-orbitron text-xs font-bold transition flex items-center gap-1.5 shadow-lg shadow-cyan-950"
+            className="min-w-0 px-2 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-orbitron text-xs font-bold transition flex items-center justify-center gap-1.5 text-center leading-snug shadow-lg shadow-cyan-950"
           >
-            <Radio className="w-4 h-4 text-black" />
-            {t.launchVisorHud}
+            <Radio className="w-4 h-4 text-black shrink-0" />
+            <span className="min-w-0">{t.launchVisorHud}</span>
           </button>
 
           <button
             onClick={handleExportPlan}
-            className="px-3 py-2 rounded-xl glass-panel border border-slate-700 hover:border-slate-500 text-slate-200 text-xs font-mono transition flex items-center gap-1.5"
+            className="min-w-0 px-2 py-2 rounded-xl glass-panel border border-slate-700 hover:border-slate-500 text-slate-200 text-xs font-mono transition flex items-center justify-center gap-1.5 text-center leading-snug"
             title="Download NASA Flight Manifest"
           >
-            <FileDown className="w-4 h-4 text-mars-orange" />
-            {t.exportPlan}
+            <FileDown className="w-4 h-4 text-mars-orange shrink-0" />
+            <span className="min-w-0">{t.exportPlan}</span>
           </button>
         </div>
       </div>
 
       {/* 2. Key EVA Metrics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         {/* Distance */}
-        <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="min-w-0 bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+          <div className="flex items-center justify-between gap-1 text-slate-400 text-xs">
             <span>{t.traverseDistance}</span>
-            <Route className="w-4 h-4 text-mars-orange" />
+            <Route className="w-4 h-4 text-mars-orange shrink-0" />
           </div>
           <div className="text-xl font-orbitron font-bold text-white mt-1">
             {totalDistanceKm.toFixed(2)} <span className="text-xs font-mono text-slate-400">km</span>
@@ -181,10 +181,10 @@ SAFETY CONTINGENCY PROTOCOL:
         </div>
 
         {/* Duration */}
-        <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="min-w-0 bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+          <div className="flex items-center justify-between gap-1 text-slate-400 text-xs">
             <span>{t.estEvaTime}</span>
-            <Clock className="w-4 h-4 text-cyan-400" />
+            <Clock className="w-4 h-4 text-cyan-400 shrink-0" />
           </div>
           <div className="text-xl font-orbitron font-bold text-white mt-1">
             {Math.floor(walkingDurationMin / 60)}h {walkingDurationMin % 60}m
@@ -195,10 +195,10 @@ SAFETY CONTINGENCY PROTOCOL:
         </div>
 
         {/* Oxygen Consumption */}
-        <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="min-w-0 bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+          <div className="flex items-center justify-between gap-1 text-slate-400 text-xs">
             <span>{t.o2Consumption}</span>
-            <Wind className="w-4 h-4 text-emerald-400" />
+            <Wind className="w-4 h-4 text-emerald-400 shrink-0" />
           </div>
           <div className="text-xl font-orbitron font-bold text-emerald-300 mt-1">
             {o2ConsumedLiters} <span className="text-xs font-mono text-slate-400">L</span>
@@ -209,10 +209,10 @@ SAFETY CONTINGENCY PROTOCOL:
         </div>
 
         {/* Metabolic Heat & Radiation */}
-        <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="min-w-0 bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+          <div className="flex items-center justify-between gap-1 text-slate-400 text-xs">
             <span>{t.radiationCalories}</span>
-            <ShieldAlert className="w-4 h-4 text-purple-400" />
+            <ShieldAlert className="w-4 h-4 text-purple-400 shrink-0" />
           </div>
           <div className="text-xl font-orbitron font-bold text-purple-300 mt-1">
             {radiationDoseMicroSv} <span className="text-xs font-mono text-slate-400">µSv</span>
@@ -225,14 +225,14 @@ SAFETY CONTINGENCY PROTOCOL:
 
       {/* 3. Elevation Profile Graph */}
       <div className="bg-slate-900/90 p-3.5 rounded-xl border border-slate-800">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex flex-col items-start gap-2 mb-2">
           <div className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-mars-orange" />
             <span className="text-xs font-orbitron font-bold text-slate-200">
               {t.topoElevationProfile}
             </span>
           </div>
-          <span className="text-[10px] font-mono text-slate-400">
+          <span className="text-[10px] font-mono text-slate-400 leading-relaxed">
             {t.ascent}: +{totalAscent}m • {t.descent}: -{totalDescent}m • {t.maxSlope}: {maxSlope}°
           </span>
         </div>
@@ -338,22 +338,22 @@ SAFETY CONTINGENCY PROTOCOL:
               <div
                 key={wp.id}
                 onClick={() => onSelectWaypoint(wp)}
-                className={`p-3 rounded-xl border transition cursor-pointer flex flex-col md:flex-row items-start md:items-center justify-between gap-3 ${
+                className={`p-3 rounded-xl border transition cursor-pointer flex flex-col items-start gap-3 ${
                   isSelected 
                     ? 'bg-mars-orange/15 border-mars-orange shadow-lg' 
                     : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
                 }`}
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3 w-full min-w-0">
                   <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono font-bold shrink-0 mt-0.5 ${
                     wp.type === 'primary-objective' ? 'bg-fuchsia-600 text-white' : 'bg-slate-800 text-slate-300'
                   }`}>
                     {index + 1}
                   </span>
 
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-white font-orbitron">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-bold text-white font-orbitron break-words">
                         {wpDisplayName}
                       </span>
                       {wp.type === 'primary-objective' && (
@@ -363,7 +363,7 @@ SAFETY CONTINGENCY PROTOCOL:
                       )}
                     </div>
 
-                    <p className="text-[11px] text-slate-300 mt-1">
+                    <p className="text-[11px] text-slate-300 mt-1 break-words">
                       {wpGoal}
                     </p>
 
@@ -380,7 +380,7 @@ SAFETY CONTINGENCY PROTOCOL:
                     {wpSample && (
                       <div className="mt-2 flex items-center gap-1.5 text-[11px] font-mono text-amber-300">
                         <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                        <span>{wpSample}</span>
+                        <span className="break-words">{wpSample}</span>
                       </div>
                     )}
                   </div>
@@ -392,7 +392,7 @@ SAFETY CONTINGENCY PROTOCOL:
                       e.stopPropagation();
                       toggleTask(wp.id);
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition shrink-0 ${
+                    className={`self-start max-w-full px-3 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 transition shrink-0 ${
                       isDone
                         ? 'bg-emerald-600 text-white shadow-md'
                         : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700'
