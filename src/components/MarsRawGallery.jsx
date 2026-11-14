@@ -98,15 +98,15 @@ export default function MarsRawGallery({ zone, lang = 'en' }) {
   const [loading, setLoading] = useState(false);
   const [solFilter, setSolFilter] = useState('');
 
-  const fetchLiveNASAImages = async () => {
+  const fetchLiveNASAImages = async ({ signal, playSound = true } = {}) => {
     setLoading(true);
-    marsAudio.playBlip();
+    if (playSound) marsAudio.playBlip();
 
     const category = selectedRover === 'Curiosity' ? 'msl' : 'mars2020';
     const endpoint = `https://mars.nasa.gov/rss/api/?feed=raw_images&category=${category}&feedtype=json&num=12&page=0`;
 
     try {
-      const res = await fetch(endpoint);
+      const res = await fetch(endpoint, { signal });
       if (res.ok) {
         const data = await res.json();
         if (data.images && data.images.length > 0) {
@@ -128,11 +128,19 @@ export default function MarsRawGallery({ zone, lang = 'en' }) {
         }
       }
     } catch (err) {
-      console.warn('Using curated NASA raw images archive:', err);
+      if (!signal?.aborted) {
+        console.warn('Using curated NASA raw images archive:', err);
+      }
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchLiveNASAImages({ signal: controller.signal, playSound: false });
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     setSelectedRover(zone.id === 'gale' ? 'Curiosity' : 'Perseverance');
