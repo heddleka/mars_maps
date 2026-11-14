@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Map, 
   Eye, 
@@ -19,6 +19,7 @@ import MissionPlanner from './components/MissionPlanner';
 import MarsRawGallery from './components/MarsRawGallery';
 import BoxworkScienceGuide from './components/BoxworkScienceGuide';
 import MarsWeatherBar from './components/MarsWeatherBar';
+import AdminPanel from './components/AdminPanel';
 import { marsAudio } from './utils/audioSystem';
 import { TRANSLATIONS } from './data/translations';
 
@@ -34,10 +35,18 @@ export default function App() {
   const [currentZoneId, setCurrentZoneId] = useState('gale');
   const zone = MARS_EXPLORATION_ZONES[currentZoneId];
 
-  // Active Waypoints state
-  const [waypoints, setWaypoints] = useState(zone.waypoints);
+  const [waypointsByZone, setWaypointsByZone] = useState(() =>
+    Object.fromEntries(
+      Object.entries(MARS_EXPLORATION_ZONES).map(([id, marsZone]) => [id, marsZone.waypoints])
+    )
+  );
+  const waypoints = waypointsByZone[currentZoneId] || zone.waypoints;
   const [selectedWaypoint, setSelectedWaypoint] = useState(zone.waypoints[0]);
   const [currentWaypointIndex, setCurrentWaypointIndex] = useState(0);
+  const [contentLoadError, setContentLoadError] = useState(false);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [adminPickMode, setAdminPickMode] = useState(false);
+  const [pendingAdminPoint, setPendingAdminPoint] = useState(null);
 
   // Active Pre-packaged Mission
   const [selectedMission, setSelectedMission] = useState(
@@ -53,13 +62,52 @@ export default function App() {
   // Live Mars Weather State
   const [weather, setWeather] = useState(DEFAULT_MARS_WEATHER);
 
+  useEffect(() => {
+    let active = true;
+    const loadSavedWaypoints = async () => {
+      try {
+        const response = await fetch('/api/zones');
+        const savedWaypoints = await response.json();
+        if (!response.ok) throw new Error(savedWaypoints.error || 'Could not load map locations.');
+        if (!active) return;
+
+        const validZones = Object.fromEntries(
+          Object.entries(savedWaypoints)
+            .filter(([zoneId, points]) =>
+              Object.hasOwn(MARS_EXPLORATION_ZONES, zoneId) && Array.isArray(points)
+            )
+        );
+        setWaypointsByZone((current) => ({ ...current, ...validZones }));
+      } catch (error) {
+        console.error('Could not load local Mars map locations:', error);
+        if (active) setContentLoadError(true);
+      }
+    };
+
+    loadSavedWaypoints();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const currentWaypoint = waypoints.find((waypoint) => waypoint.id === selectedWaypoint?.id);
+    if (currentWaypoint && currentWaypoint !== selectedWaypoint) {
+      setSelectedWaypoint(currentWaypoint);
+    } else if (!currentWaypoint) {
+      setSelectedWaypoint(waypoints[0] || null);
+      setCurrentWaypointIndex(0);
+    }
+  }, [waypoints, selectedWaypoint]);
+
   // Change Exploration Zone
   const handleSelectZone = (zoneId) => {
     marsAudio.playQuindarIntro();
+    setAdminPickMode(false);
     setCurrentZoneId(zoneId);
     const newZone = MARS_EXPLORATION_ZONES[zoneId];
-    setWaypoints(newZone.waypoints);
-    setSelectedWaypoint(newZone.waypoints[0]);
+    const newWaypoints = waypointsByZone[zoneId] || newZone.waypoints;
+    setSelectedWaypoint(newWaypoints[0] || null);
     setCurrentWaypointIndex(0);
     setSelectedMission(PREPACKAGED_MISSIONS[newZone.defaultMissionId]);
     setViewMode('map');
@@ -67,21 +115,46 @@ export default function App() {
 
   // Add custom waypoint on map click
   const handleAddWaypoint = (newWp) => {
-    setWaypoints(prev => [...prev, newWp]);
+    setWaypointsByZone((current) => ({
+      ...current,
+      [currentZoneId]: [...(current[currentZoneId] || zone.waypoints), newWp]
+    }));
     setSelectedWaypoint(newWp);
     setIsAddMode(false);
+  };
+
+  const handleAdminMapPick = ({ lat, lng }) => {
+    setPendingAdminPoint({ lat, lng });
+    setAdminPickMode(false);
+    setShowAdminPanel(true);
   };
 
   // Remove waypoint
   const handleRemoveWaypoint = (wpId) => {
     marsAudio.playBlip();
-    setWaypoints(prev => {
-      const filtered = prev.filter(w => w.id !== wpId);
-      if (selectedWaypoint?.id === wpId) {
-        setSelectedWaypoint(filtered[0] || null);
-      }
-      return filtered;
+    const updatedWaypoints = waypoints.filter((waypoint) => waypoint.id !== wpId);
+    setWaypointsByZone((current) => ({ ...current, [currentZoneId]: updatedWaypoints }));
+    if (selectedWaypoint?.id === wpId) setSelectedWaypoint(updatedWaypoints[0] || null);
+  };
+
+  const handleSaveWaypoints = async (zoneId, updatedWaypoints) => {
+    const response = await fetch(`/api/zones/${encodeURIComponent(zoneId)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ waypoints: updatedWaypoints })
     });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Could not save map locations.');
+
+    setWaypointsByZone((current) => ({ ...current, [zoneId]: updatedWaypoints }));
+    setContentLoadError(false);
+    setPendingAdminPoint(null);
+    if (zoneId === currentZoneId) {
+      setSelectedWaypoint((current) =>
+        updatedWaypoints.find((waypoint) => waypoint.id === current?.id) || updatedWaypoints[0] || null
+      );
+      setCurrentWaypointIndex(0);
+    }
   };
 
   // Toggle Language between English and Uzbek
@@ -98,9 +171,21 @@ export default function App() {
         
         {/* Brand / Logo */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-700 via-blue-600 to-red-600 flex items-center justify-center shadow-lg shadow-blue-950 border border-blue-400/40">
+          <button
+            type="button"
+            onDoubleClick={() => setShowAdminPanel(true)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                setShowAdminPanel(true);
+              }
+            }}
+            className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-700 via-blue-600 to-red-600 flex items-center justify-center shadow-lg shadow-blue-950 border border-blue-400/40 cursor-pointer"
+            aria-label={t.adminAccessHint}
+            title={t.adminAccessHint}
+          >
             <span className="font-orbitron font-extrabold text-[10px] text-white tracking-tighter">NASA</span>
-          </div>
+          </button>
 
           <div>
             <div className="flex items-center gap-2">
@@ -228,6 +313,11 @@ export default function App() {
 
       {/* 3. MAIN WORKSPACE VIEWPORT */}
       <main className="flex-1 relative overflow-hidden flex">
+        {contentLoadError && (
+          <div role="alert" className="absolute left-3 right-3 top-3 z-30 rounded-lg border border-red-500/40 bg-red-950/90 p-2 text-center text-xs text-red-200">
+            {t.adminContentLoadFailed}
+          </div>
+        )}
         
         {/* VIEW 1: INTERACTIVE 2D TACTICAL EVA MAP & SIDEBAR */}
         {viewMode === 'map' && (
@@ -248,6 +338,9 @@ export default function App() {
                 onRemoveWaypoint={handleRemoveWaypoint}
                 isAddMode={isAddMode}
                 setIsAddMode={setIsAddMode}
+                adminPickMode={adminPickMode}
+                onAdminMapPick={handleAdminMapPick}
+                onCancelAdminPick={() => setAdminPickMode(false)}
                 lang={lang}
               />
             </div>
@@ -281,6 +374,15 @@ export default function App() {
                   <p className="text-xs text-slate-300 mt-1.5">
                     {lang === 'uz' ? (selectedWaypoint.scienceGoal_uz || selectedWaypoint.scienceGoal) : selectedWaypoint.scienceGoal}
                   </p>
+
+                  {selectedWaypoint.img && (
+                    <img
+                      src={selectedWaypoint.img}
+                      alt={lang === 'uz' ? (selectedWaypoint.name_uz || selectedWaypoint.name) : selectedWaypoint.name}
+                      loading="lazy"
+                      className="mt-2 max-h-32 w-full rounded-lg border border-slate-800 object-cover"
+                    />
+                  )}
 
                   <div className="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-slate-800 text-[11px] font-mono">
                     <div>
@@ -359,6 +461,29 @@ export default function App() {
       {/* 4. MODAL: BOXWORK SCIENCE DOSSIER */}
       {showScienceGuide && (
         <BoxworkScienceGuide onClose={() => setShowScienceGuide(false)} lang={lang} />
+      )}
+
+      {showAdminPanel && (
+        <AdminPanel
+          zoneId={currentZoneId}
+          zoneName={lang === 'uz' ? (zone.name_uz || zone.name) : zone.name}
+          waypoints={waypoints}
+          onSave={handleSaveWaypoints}
+          onRequestMapPick={() => {
+            setPendingAdminPoint(null);
+            setIsAddMode(false);
+            setViewMode('map');
+            setAdminPickMode(true);
+            setShowAdminPanel(false);
+          }}
+          initialCoordinates={pendingAdminPoint}
+          startInCreateMode={pendingAdminPoint !== null}
+          onClose={() => {
+            setShowAdminPanel(false);
+            setPendingAdminPoint(null);
+          }}
+          lang={lang}
+        />
       )}
 
     </div>

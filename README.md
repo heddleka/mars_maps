@@ -96,3 +96,17 @@ ARES-NAV is calibrated for human-scale surface excursions across Mars' two premi
 - **USGS Planetary Geologic Mapping:** MOLA hypsometric color ramps & CRISM mineral unit references.
 - **NASA Science SMD:** Curiosity Lower Mount Sharp proposed route & Boxwork Formations study (PIA26388).
 
+---
+
+## Local Admin and SQLite
+
+The NASA logo opens the admin panel after a double-click. The local Node server creates `data/mars-maps.sqlite` automatically and stores uploaded photos in `data/uploads/`.
+
+1. Copy `.env.example` to `.env`.
+2. Set `ADMIN_USERNAME` and `ADMIN_PASSWORD` in `.env`. Use a password with at least 8 characters; keep `.env` private.
+3. Run `npm install`, then `npm run dev`. Open the Vite URL shown in the terminal (normally `http://localhost:3000`).
+
+The database and uploaded photos are local to that computer and are ignored by Git. Each developer gets a separate SQLite database; this setup does not synchronize changes between machines. For a built local run, use `npm run build` followed by `npm start`.
+
+This SQLite MVP requires a persistent Node server and does not work as a static-only Vercel deployment. A shared public deployment would need a host that preserves the SQLite file and uploaded photos.
+
