@@ -7,6 +7,10 @@
 
 ## 🚀 Live Demo & Launch Instructions
 
+### 👥 Current Team Preview (ngrok)
+Available while the ngrok tunnel is running. The URL may change when the tunnel restarts.
+- **Current Link:** **[https://acf5-217-30-173-202.ngrok-free.app](https://acf5-217-30-173-202.ngrok-free.app)**
+
 ### 🌐 Live Production Website (Vercel)
 Anyone can access the live application directly without installing anything:
 - **Primary Live Link:** **[https://mars-maps.vercel.app](https://mars-maps.vercel.app)**
