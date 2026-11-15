@@ -112,10 +112,23 @@ The database and uploaded photos are local to that computer and are ignored by G
 
 The Vercel frontend uses serverless routes under `api/`; persistent map data and photos are stored in Supabase so they survive function restarts.
 
-1. Create a Supabase project on its free tier.
-2. In Supabase SQL Editor, run [`supabase/schema.sql`](supabase/schema.sql). This creates the waypoint table and public photo bucket.
-3. In Vercel project settings, add these Production environment variables: `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `SESSION_SECRET`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_BUCKET` (`mars-map-photos`). Generate a unique session secret with `openssl rand -hex 32`. Keep the service-role key server-side; never prefix it with `VITE_`.
-4. Redeploy the project after setting the variables.
+1. Sign in to Supabase, create an organization if needed, then select **New project**. Give the project a name, create its database password, and choose a region.
+2. After the project finishes provisioning, open **SQL Editor**, create a query, paste the contents of [`supabase/schema.sql`](supabase/schema.sql), and run it. This creates `public.zone_content` and the public `mars-map-photos` bucket.
+3. In Supabase, open **Project Settings → API** (or **API Keys**). Copy the **Project URL** and the **service_role / secret key**. Do not use the publishable/anon key for the server key.
+4. Open **Vercel → mars_maps → Settings → Environment Variables**. Add each variable for **Production** (and Preview too if you use preview deployments):
 
-Local `npm run dev` continues to use the local SQLite API. The Vercel API uses Supabase; it falls back to the built-in map data until Supabase is configured.
+  | Name | Value |
+  | --- | --- |
+  | `ADMIN_USERNAME` | `admin` or another username |
+  | `ADMIN_PASSWORD` | A unique password; do not use `Admin123!` on a public site |
+  | `SESSION_SECRET` | Output of `openssl rand -hex 32` |
+  | `SUPABASE_URL` | Project URL from Supabase |
+  | `SUPABASE_SERVICE_ROLE_KEY` | Server-side secret key from Supabase |
+  | `SUPABASE_BUCKET` | `mars-map-photos` |
+
+  The service-role key is secret: never put it in `VITE_*` variables, frontend code, or chat messages.
+5. Redeploy the Vercel project. If Git integration is not connected, run `npx vercel --prod` from this repository after setting the variables.
+6. Verify `https://mars-maps.vercel.app/api/zones` returns `gale` and `jezero`, then double-click the NASA logo and sign in to save a waypoint or upload a photo.
+
+Local `npm run dev` continues to use the local SQLite API and `data/uploads/`; Vercel uses Supabase. Without Supabase variables, the public map falls back to built-in locations, while admin sign-in and saving remain unavailable.
 
