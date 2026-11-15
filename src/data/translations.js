@@ -170,6 +170,7 @@ export const TRANSLATIONS = {
     // Raw Photos Gallery
     rawGalleryTitle: "NASA Raw Surface Imagery & POV Gallery",
     rawGallerySubtitle: "Real-time feed from NASA Mars 2020 & Curiosity Raw Image Archives (Over 1.18 Million Photos on Record).",
+    loadMorePhotos: "Load more photos",
     filterSolPlaceholder: "Search by Sol...",
     searchSol: "Search",
     noPhotosFound: "No photos found for this Sol.",
@@ -370,6 +371,7 @@ export const TRANSLATIONS = {
     // Raw Photos Gallery
     rawGalleryTitle: "NASA Haqiqiy Sirt Suratlari Galereyasi",
     rawGallerySubtitle: "NASA Mars 2020 va Curiosity roverlarining jonli arxiv suratlari (1.18 milliondan ziyod rasm).",
+    loadMorePhotos: "Ko'proq surat yuklash",
     filterSolPlaceholder: "Sol bo'yicha qidirish...",
     searchSol: "Qidirish",
     noPhotosFound: "Bu Sol uchun surat topilmadi.",
