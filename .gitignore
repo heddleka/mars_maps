@@ -24,3 +24,9 @@ dist-ssr
 *.sw?
 
 .vercel
+.env*
+!.env.example
+data/*.sqlite
+data/.session-secret
+data/uploads/
+vite.config.js.timestamp-*.mjs

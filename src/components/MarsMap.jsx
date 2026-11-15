@@ -28,12 +28,26 @@ export default function MarsMap({
   onRemoveWaypoint,
   isAddMode,
   setIsAddMode,
+  adminPickMode = false,
+  onAdminMapPick,
+  onCancelAdminPick,
   lang = 'en'
 }) {
   const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const layersGroupRef = useRef({});
+  const mapClickStateRef = useRef({});
+
+  useEffect(() => {
+    mapClickStateRef.current = {
+      adminPickMode,
+      isAddMode,
+      onAdminMapPick,
+      onAddWaypoint,
+      waypoints
+    };
+  }, [adminPickMode, isAddMode, onAdminMapPick, onAddWaypoint, waypoints]);
 
   // Active Map Layer States
   const [baseMap, setBaseMap] = useState('viking'); // 'mola', 'viking', 'themis', 'trek'
@@ -97,16 +111,29 @@ export default function MarsMap({
       });
     });
 
-    // Map click handler for adding custom waypoints
+    // Keep the map instance stable while using the latest click mode and callbacks.
     map.on('click', (e) => {
-      if (isAddMode && onAddWaypoint) {
-        const wpNum = waypoints.length + 1;
-        onAddWaypoint({
+      const { adminPickMode: pickingAdminLocation, isAddMode: addingCustomWaypoint,
+        onAdminMapPick: selectAdminLocation, onAddWaypoint: addWaypoint, waypoints: currentWaypoints
+      } = mapClickStateRef.current;
+      const coordinates = {
+        lat: Number(e.latlng.lat.toFixed(4)),
+        lng: Number(e.latlng.lng.toFixed(4))
+      };
+
+      if (pickingAdminLocation && selectAdminLocation) {
+        selectAdminLocation(coordinates);
+        marsAudio.playBlip();
+        return;
+      }
+
+      if (addingCustomWaypoint && addWaypoint) {
+        const wpNum = currentWaypoints.length + 1;
+        addWaypoint({
           id: `custom-${Date.now()}`,
           name: `EVA Waypoint ${wpNum}`,
           name_uz: `EVA Nuqtasi ${wpNum}`,
-          lat: Number(e.latlng.lat.toFixed(4)),
-          lng: Number(e.latlng.lng.toFixed(4)),
+          ...coordinates,
           elevation: Math.round(-4200 + Math.random() * 500),
           type: 'custom',
           hazard: 'Nominal',
@@ -695,20 +722,34 @@ export default function MarsMap({
 
       {/* Top Center: Add Custom Waypoint Mode Banner */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2">
-        <button
-          onClick={() => {
-            setIsAddMode(!isAddMode);
-            marsAudio.playBlip();
-          }}
-          className={`px-4 py-2 rounded-xl text-xs font-orbitron font-bold transition flex items-center gap-2 shadow-xl border ${
-            isAddMode 
-              ? 'bg-amber-500 border-amber-300 text-black animate-pulse'
-              : 'glass-panel border-mars-orange/40 text-mars-orange hover:bg-mars-orange/20'
-          }`}
-        >
-          <Plus className="w-4 h-4" />
-          {isAddMode ? t.clickMapToPlace : t.addCustomWaypoint}
-        </button>
+        {adminPickMode ? (
+          <div className="glass-panel flex items-center gap-3 rounded-xl border border-cyan-500/50 px-4 py-2 text-xs font-orbitron font-bold text-cyan-200 shadow-xl">
+            <MapPin className="h-4 w-4 shrink-0 text-cyan-400" />
+            <span>{t.adminMapPickHint}</span>
+            <button
+              type="button"
+              onClick={onCancelAdminPick}
+              className="rounded-lg border border-slate-600 px-2 py-1 text-[10px] text-slate-300 hover:bg-slate-800 hover:text-white"
+            >
+              {t.adminCancelMapPick}
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => {
+              setIsAddMode(!isAddMode);
+              marsAudio.playBlip();
+            }}
+            className={`px-4 py-2 rounded-xl text-xs font-orbitron font-bold transition flex items-center gap-2 shadow-xl border ${
+              isAddMode
+                ? 'bg-amber-500 border-amber-300 text-black animate-pulse'
+                : 'glass-panel border-mars-orange/40 text-mars-orange hover:bg-mars-orange/20'
+            }`}
+          >
+            <Plus className="w-4 h-4" />
+            {isAddMode ? t.clickMapToPlace : t.addCustomWaypoint}
+          </button>
+        )}
 
         <button
           onClick={() => {
