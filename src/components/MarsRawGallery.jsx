@@ -10,104 +10,119 @@ import {
 import { marsAudio } from '../utils/audioSystem';
 import { TRANSLATIONS } from '../data/translations';
 
-const CURATED_NASA_PHOTOS = [
+const STARTER_NASA_PHOTOS = [
   {
-    id: 'boxwork-01',
-    rover: 'Curiosity (MSL)',
-    sol: 4212,
-    camera: 'Mastcam High-Resolution',
-    title: 'Mount Sharp Boxwork Polygonal Vein Networks',
-    title_uz: 'Mount Sharp Boxwork Ko\'pburchakli Mineral Tomirlari',
-    desc: 'Curiosity close-up of intricate boxwork honeycomb mineral ridges created when mineral-rich fluids cemented fractures in bedrock, which were later exposed by wind erosion.',
-    desc_uz: 'Curiosity tomonidan olingan yaqin surat: yerosti suvlari yoriqlarga minerallarni to\'ldirishi va shamol yemirilishi natijasida yuzada qolgan asalari uyasimon tosh tizmalari.',
-    url: 'https://science.nasa.gov/wp-content/uploads/2024/09/boxwork-pia26388.jpg',
-    site: 'Mount Sharp Gediz Vallis Ridge',
-    coords: '-4.8350° S, 137.3200° E'
+    id: 'NLB_847853302EDR_F1252490NCAM00354M_',
+    rover: 'Curiosity',
+    sol: 5073,
+    camera: 'Navcam Left B',
+    title: 'Sol 5073 Raw Surface Exposure',
+    title_uz: '5073-sol Mars sirti surati',
+    desc: 'NASA raw surface image captured by Curiosity.',
+    desc_uz: 'Curiosity tomonidan olingan NASA Mars sirti surati.',
+    url: 'https://mars.nasa.gov/msl-raw-images/proj/msl/redops/ods/surface/sol/05073/opgs/edr/ncam/NLB_847853302EDR_F1252490NCAM00354M_-thm.jpg',
+    originalUrl: 'https://mars.nasa.gov/msl-raw-images/proj/msl/redops/ods/surface/sol/05073/opgs/edr/ncam/NLB_847853302EDR_F1252490NCAM00354M_.JPG',
+    site: 'Gale Crater / Mount Sharp',
+    coords: '-4.65°, 137.4°'
   },
   {
-    id: 'vera-rubin-02',
-    rover: 'Curiosity (MSL)',
-    sol: 1926,
-    camera: 'Mastcam Panoramic',
-    title: 'Vera Rubin Hematite Ridge & Gale Crater Floor',
-    title_uz: 'Vera Rubin Gematit Tizmasi va Gale Krateri Tubi',
-    desc: 'View from the top of Vera Rubin Ridge looking back down across the clay-bearing Glen Torridon trough towards the northern rim of Gale Crater.',
-    desc_uz: 'Vera Rubin tizmasining tepasidan Glen Torridon gil botiqligi va Gale kraterining shimoliy devoriga qarata olingan panorama.',
-    url: 'https://mars.nasa.gov/msl-raw-images/proj/msl/redops/ods/surface/sol/01926/soas/fdr/fcam/FLB_568600108EDR_F0672044FHAZ00337M_.JPG',
-    site: 'Vera Rubin Ridge',
-    coords: '-4.7290° S, 137.3820° E'
+    id: 'NRB_847853302EDR_F1252490NCAM00354M_',
+    rover: 'Curiosity',
+    sol: 5073,
+    camera: 'Navcam Right B',
+    title: 'Sol 5073 Raw Surface Exposure',
+    title_uz: '5073-sol Mars sirti surati',
+    desc: 'NASA raw surface image captured by Curiosity.',
+    desc_uz: 'Curiosity tomonidan olingan NASA Mars sirti surati.',
+    url: 'https://mars.nasa.gov/msl-raw-images/proj/msl/redops/ods/surface/sol/05073/opgs/edr/ncam/NRB_847853302EDR_F1252490NCAM00354M_-thm.jpg',
+    originalUrl: 'https://mars.nasa.gov/msl-raw-images/proj/msl/redops/ods/surface/sol/05073/opgs/edr/ncam/NRB_847853302EDR_F1252490NCAM00354M_.JPG',
+    site: 'Gale Crater / Mount Sharp',
+    coords: '-4.65°, 137.4°'
   },
   {
-    id: 'gediz-vallis-03',
-    rover: 'Curiosity (MSL)',
-    sol: 3880,
-    camera: 'Front Hazard Avoidance (Hazcam)',
-    title: 'Gediz Vallis Megablock Boulder Field',
-    title_uz: 'Gediz Vallis Ulkan Toshlar Maydoni',
-    desc: 'Traversing the debris flow corridor with massive dark boulders washed down Mount Sharp during ancient catastrophic wet debris events.',
-    desc_uz: 'Qadimgi halokatli sel toshqinlari davrida Mount Sharp tog\'idan oqib tushgan ulkan qora xarsangtoshlar maydoni.',
-    url: 'https://mars.nasa.gov/msl-raw-images/proj/msl/redops/ods/surface/sol/03880/soas/fdr/fcam/FLB_742137599EDR_F1020000FHAZ00304M_.JPG',
-    site: 'Gediz Vallis Ridge',
-    coords: '-4.7820° S, 137.3550° E'
+    id: 'NLB_847853270EDR_F1252490NCAM00354M_',
+    rover: 'Curiosity',
+    sol: 5073,
+    camera: 'Navcam Left B',
+    title: 'Sol 5073 Raw Surface Exposure',
+    title_uz: '5073-sol Mars sirti surati',
+    desc: 'NASA raw surface image captured by Curiosity.',
+    desc_uz: 'Curiosity tomonidan olingan NASA Mars sirti surati.',
+    url: 'https://mars.nasa.gov/msl-raw-images/proj/msl/redops/ods/surface/sol/05073/opgs/edr/ncam/NLB_847853270EDR_F1252490NCAM00354M_-thm.jpg',
+    originalUrl: 'https://mars.nasa.gov/msl-raw-images/proj/msl/redops/ods/surface/sol/05073/opgs/edr/ncam/NLB_847853270EDR_F1252490NCAM00354M_.JPG',
+    site: 'Gale Crater / Mount Sharp',
+    coords: '-4.65°, 137.4°'
   },
   {
-    id: 'cheyava-04',
+    id: 'LRF_2031_0847237865_241EBY_N0930000SCAM01031_0100I4J',
     rover: 'Perseverance',
-    sol: 1217,
-    camera: 'SHERLOC WATSON Microscopic',
-    title: 'Cheyava Falls "Leopard Spots" Biosignature Candidate',
-    title_uz: 'Cheyava Falls "Qoplon Dog\'lari" Hayot Izlari Namunasi',
-    desc: 'High-magnification view of reddish vein rock showing millimeter-scale white halos with black borders containing iron phosphate, pointing to chemical reactions that could have sustained microbial life.',
-    desc_uz: 'Mikroskopik surat: qizg\'ish tosh yuzasida temir fosfatini o\'z ichiga olgan oq halqalar — qadimda mikrobial hayotni quvvatlagan kimyoviy reaksiyalar dalili.',
-    url: 'https://mars.nasa.gov/system/resources/detail_files/28080_PIA26372-web.jpg',
-    site: 'Bright Angel Margin Unit',
-    coords: '18.5120° N, 77.3480° E'
+    sol: 2031,
+    camera: 'SuperCam RMI',
+    title: 'Sol 2031 Raw Surface Exposure',
+    title_uz: '2031-sol Mars sirti surati',
+    desc: 'NASA raw surface image captured by Perseverance.',
+    desc_uz: 'Perseverance tomonidan olingan NASA Mars sirti surati.',
+    url: 'https://mars.nasa.gov/mars2020-raw-images/pub/ods/surface/sol/02031/ids/edr/browse/scam/LRF_2031_0847237865_241EBY_N0930000SCAM01031_0100I4J01_320.jpg',
+    originalUrl: 'https://mars.nasa.gov/mars2020-raw-images/pub/ods/surface/sol/02031/ids/edr/browse/scam/LRF_2031_0847237865_241EBY_N0930000SCAM01031_0100I4J01.png',
+    site: 'Jezero Crater',
+    coords: '18.45°, 77.45°'
   },
   {
-    id: 'kodiak-05',
+    id: 'LRE_2031_0847237865_241ECM_N0930000SCAM01031_0100I4J',
     rover: 'Perseverance',
-    sol: 78,
-    camera: 'Mastcam-Z Telephoto',
-    title: 'Kodiak Butte Delta Sediment Stratigraphy',
-    title_uz: 'Kodiak Butte Qadimgi Daryo Deltasi Qatlamlari',
-    desc: 'Telephoto view of the isolated Kodiak butte displaying clear horizontal bottomset beds capped by dipping foreset delta beds, demonstrating ancient high-energy river lake inflow.',
-    desc_uz: 'Alohida turgan Kodiak qoyasida qadimgi daryoning ko\'lga quyilishi natijasida hosil bo\'lgan gorizontal va nishab cho\'kindi qatlamlar.',
-    url: 'https://mars.nasa.gov/mars2020-raw-images/pub/ods/surface/sol/00078/ids/edr/browse/mcam/ML0_0078_0673753303_193ECM_N0010052AUT_04095_00_2J01.png',
-    site: 'Kodiak Butte Delta Remnant',
-    coords: '18.4090° N, 77.4080° E'
+    sol: 2031,
+    camera: 'SuperCam RMI',
+    title: 'Sol 2031 Raw Surface Exposure',
+    title_uz: '2031-sol Mars sirti surati',
+    desc: 'NASA raw surface image captured by Perseverance.',
+    desc_uz: 'Perseverance tomonidan olingan NASA Mars sirti surati.',
+    url: 'https://mars.nasa.gov/mars2020-raw-images/pub/ods/surface/sol/02031/ids/edr/browse/scam/LRE_2031_0847237865_241ECM_N0930000SCAM01031_0100I4J01_320.jpg',
+    originalUrl: 'https://mars.nasa.gov/mars2020-raw-images/pub/ods/surface/sol/02031/ids/edr/browse/scam/LRE_2031_0847237865_241ECM_N0930000SCAM01031_0100I4J01.png',
+    site: 'Jezero Crater',
+    coords: '18.45°, 77.45°'
   },
   {
-    id: 'hawksbill-06',
+    id: 'LRF_2031_0847236596_261EBY_N0930000SCAM01031_0050I4J',
     rover: 'Perseverance',
-    sol: 525,
-    camera: 'Mastcam-Z Right Eye',
-    title: 'Hawksbill Gap Delta Front Scarp',
-    title_uz: 'Hawksbill Gap Delta Qoyasi',
-    desc: 'Climbing into the lower delta front sediments where abundant organic matter was discovered in the Wildcat Ridge mudstone core sample.',
-    desc_uz: 'Wildcat Ridge namunalarida ko\'plab organik birikmalar topilgan quyi delta qoyasi bo\'ylab ko\'tarilish.',
-    url: 'https://mars.nasa.gov/mars2020-raw-images/pub/ods/surface/sol/00525/ids/edr/browse/zcam/ZR0_0525_0713783457_012ECM_N0010052AUT_04095_00_2J01.png',
-    site: 'Hawksbill Gap',
-    coords: '18.4550° N, 77.3910° E'
+    sol: 2031,
+    camera: 'SuperCam RMI',
+    title: 'Sol 2031 Raw Surface Exposure',
+    title_uz: '2031-sol Mars sirti surati',
+    desc: 'NASA raw surface image captured by Perseverance.',
+    desc_uz: 'Perseverance tomonidan olingan NASA Mars sirti surati.',
+    url: 'https://mars.nasa.gov/mars2020-raw-images/pub/ods/surface/sol/02031/ids/edr/browse/scam/LRF_2031_0847236596_261EBY_N0930000SCAM01031_0050I4J01_320.jpg',
+    originalUrl: 'https://mars.nasa.gov/mars2020-raw-images/pub/ods/surface/sol/02031/ids/edr/browse/scam/LRF_2031_0847236596_261EBY_N0930000SCAM01031_0050I4J01.png',
+    site: 'Jezero Crater',
+    coords: '18.45°, 77.45°'
   }
 ];
 
 export default function MarsRawGallery({ zone, lang = 'en' }) {
   const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-  const [photos, setPhotos] = useState(CURATED_NASA_PHOTOS);
+  const [photos, setPhotos] = useState(STARTER_NASA_PHOTOS);
   const [selectedRover, setSelectedRover] = useState(zone.id === 'gale' ? 'Curiosity' : 'Perseverance');
   const [activePhoto, setActivePhoto] = useState(null);
   const [loading, setLoading] = useState(false);
   const [solFilter, setSolFilter] = useState('');
   const [searchError, setSearchError] = useState('');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
 
-  const fetchLiveNASAImages = async ({ signal, playSound = true, sol } = {}) => {
+  const fetchLiveNASAImages = async ({
+    signal,
+    playSound = true,
+    sol,
+    page = 0,
+    append = false
+  } = {}) => {
     setLoading(true);
     setSearchError('');
+    if (!append) setHasMore(false);
     if (playSound) marsAudio.playBlip();
 
     const category = selectedRover === 'Curiosity' ? 'msl' : 'mars2020';
     const solQuery = sol ? `&sol=${encodeURIComponent(sol)}` : '';
-    const endpoint = `https://mars.nasa.gov/rss/api/?feed=raw_images&category=${category}&feedtype=json&num=12&page=0${solQuery}`;
+    const endpoint = `https://mars.nasa.gov/rss/api/?feed=raw_images&category=${category}&feedtype=json&num=12&page=${page}${solQuery}`;
 
     try {
       const res = await fetch(endpoint, { signal });
@@ -126,13 +141,25 @@ export default function MarsRawGallery({ zone, lang = 'en' }) {
         title_uz: `Sol ${img.sol} Mars Sirti Xom Surati`,
         desc: `Raw image captured on Mars by ${selectedRover}. UTC: ${img.date_taken_utc || 'Recently received via DSN'}.`,
         desc_uz: `${selectedRover} tomonidan Marsda olingan haqiqiy xom surat. UTC: ${img.date_taken_utc || 'DSN orqali qabul qilingan'}.`,
-        url: img.image_files?.medium || img.image_files?.small || img.image_files?.large || img.image_files?.full_res,
+        url: img.image_files?.small || img.image_files?.medium || img.image_files?.large || img.image_files?.full_res,
         originalUrl: img.image_files?.full_res || img.image_files?.large || img.image_files?.medium || img.image_files?.small,
         site: lang === 'uz' ? (zone.name_uz || zone.name) : zone.name,
         coords: `${zone.center[0]}°, ${zone.center[1]}°`
       })).filter(item => item.url);
 
-      setPhotos([...liveList, ...CURATED_NASA_PHOTOS]);
+      setPhotos((currentPhotos) => {
+        const nextPhotos = append
+          ? [...currentPhotos, ...liveList]
+          : [...liveList, ...STARTER_NASA_PHOTOS];
+        const seen = new Set();
+        return nextPhotos.filter((photo) => {
+          if (seen.has(photo.id)) return false;
+          seen.add(photo.id);
+          return true;
+        });
+      });
+      setCurrentPage(page);
+      setHasMore(images.length === 12);
     } catch (err) {
       if (!signal?.aborted) {
         console.warn('Using curated NASA raw images archive:', err);
@@ -145,7 +172,10 @@ export default function MarsRawGallery({ zone, lang = 'en' }) {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetchLiveNASAImages({ signal: controller.signal, playSound: false });
+    fetchLiveNASAImages({
+      signal: controller.signal,
+      playSound: false
+    });
     return () => controller.abort();
   }, [selectedRover]);
 
@@ -163,7 +193,7 @@ export default function MarsRawGallery({ zone, lang = 'en' }) {
     event.preventDefault();
     const sol = solFilter.trim();
     if (/^\d+$/.test(sol)) {
-      fetchLiveNASAImages({ sol });
+      fetchLiveNASAImages({ sol, page: 0 });
     }
   };
 
@@ -231,7 +261,7 @@ export default function MarsRawGallery({ zone, lang = 'en' }) {
           </form>
 
           <button
-            onClick={fetchLiveNASAImages}
+            onClick={() => fetchLiveNASAImages({ page: 0 })}
             disabled={loading}
             className="px-3 py-1.5 rounded-lg bg-cyan-600/80 hover:bg-cyan-500 text-white font-mono text-xs transition flex items-center gap-1.5"
           >
@@ -270,8 +300,11 @@ export default function MarsRawGallery({ zone, lang = 'en' }) {
                   alt={photoTitle}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
+                  decoding="async"
+                  fetchPriority="low"
                   onError={(e) => {
-                    e.target.src = 'https://science.nasa.gov/wp-content/uploads/2024/09/boxwork-pia26388.jpg';
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = STARTER_NASA_PHOTOS[0].url;
                   }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
@@ -311,6 +344,18 @@ export default function MarsRawGallery({ zone, lang = 'en' }) {
           );
         })}
       </div>
+      {hasMore && (
+        <div className="flex justify-center pb-2">
+          <button
+            type="button"
+            onClick={() => fetchLiveNASAImages({ page: currentPage + 1, append: true })}
+            disabled={loading}
+            className="rounded-lg border border-cyan-700 bg-cyan-950/40 px-4 py-2 text-xs font-mono text-cyan-300 transition hover:bg-cyan-900/60 disabled:opacity-50"
+          >
+            {loading ? t.receivingDsn : t.loadMorePhotos}
+          </button>
+        </div>
+      )}
 
       {/* 3. Lightbox Modal */}
       {activePhoto && (
