@@ -226,7 +226,7 @@ export default function MarsMap({
           const params = new URLSearchParams({
             bbox: bounds.toBBoxString(),
             bboxSR: '104905',
-            imageSR: '104905',
+            imageSR: '3857',
             size: `${tileSize.x},${tileSize.y}`,
             format: 'jpgpng',
             f: 'image'
