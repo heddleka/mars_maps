@@ -288,17 +288,25 @@ export default function AdminPanel({
       const waypointId = draft.id || `wp-${crypto.randomUUID()}`;
       let imageUrl = draft.img.trim();
       if (photoFile) {
-        const formData = new FormData();
-        formData.append('photo', photoFile);
-        const uploadResponse = await fetch('/api/uploads', {
+        const signResponse = await fetch('/api/uploads/sign', {
           method: 'POST',
-          body: formData,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contentType: photoFile.type }),
         });
-        const uploadResult = await uploadResponse.json();
-        if (!uploadResponse.ok) {
-          throw new Error(uploadResult.error || 'Photo upload failed.');
+        const signedUpload = await signResponse.json();
+        if (!signResponse.ok) {
+          throw new Error(signedUpload.error || 'Photo upload failed.');
         }
-        imageUrl = uploadResult.url;
+
+        const uploadResponse = await fetch(signedUpload.uploadUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': photoFile.type },
+          body: photoFile,
+        });
+        if (!uploadResponse.ok) {
+          throw new Error('Photo upload failed.');
+        }
+        imageUrl = signedUpload.publicUrl;
       }
 
       const waypoint = {

@@ -108,5 +108,14 @@ The NASA logo opens the admin panel after a double-click. The local Node server 
 
 The database and uploaded photos are local to that computer and are ignored by Git. Each developer gets a separate SQLite database; this setup does not synchronize changes between machines. For a built local run, use `npm run build` followed by `npm start`.
 
-This SQLite MVP requires a persistent Node server and does not work as a static-only Vercel deployment. A shared public deployment would need a host that preserves the SQLite file and uploaded photos.
+## Free Vercel Admin Storage
+
+The Vercel frontend uses serverless routes under `api/`; persistent map data and photos are stored in Supabase so they survive function restarts.
+
+1. Create a Supabase project on its free tier.
+2. In Supabase SQL Editor, run [`supabase/schema.sql`](supabase/schema.sql). This creates the waypoint table and public photo bucket.
+3. In Vercel project settings, add these Production environment variables: `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `SESSION_SECRET`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_BUCKET` (`mars-map-photos`). Generate a unique session secret with `openssl rand -hex 32`. Keep the service-role key server-side; never prefix it with `VITE_`.
+4. Redeploy the project after setting the variables.
+
+Local `npm run dev` continues to use the local SQLite API. The Vercel API uses Supabase; it falls back to the built-in map data until Supabase is configured.
 

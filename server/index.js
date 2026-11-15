@@ -172,6 +172,7 @@ const photoUpload = multer({
     callback(null, true);
   }
 });
+const pendingLocalUploads = new Map();
 
 const app = express();
 app.disable('x-powered-by');
@@ -210,6 +211,52 @@ app.post('/api/auth/logout', (_request, response) => {
 app.get('/api/zones', (_request, response) => {
   response.json(readZones());
 });
+
+app.post('/api/uploads/sign', requireAdmin, (request, response) => {
+  const contentType = request.body?.contentType;
+  const extension = allowedPhotoTypes.get(contentType);
+  if (!extension) {
+    response.status(400).json({ error: 'Choose a JPEG, PNG, or WebP image.' });
+    return;
+  }
+
+  const uploadId = randomBytes(16).toString('hex');
+  const filename = `${randomBytes(16).toString('hex')}.${extension}`;
+  pendingLocalUploads.set(uploadId, {
+    filename,
+    contentType,
+    expiresAt: Date.now() + 15 * 60 * 1000
+  });
+  response.json({
+    uploadUrl: `/api/uploads/local/${uploadId}`,
+    publicUrl: `/uploads/${filename}`
+  });
+});
+
+app.put(
+  '/api/uploads/local/:uploadId',
+  requireAdmin,
+  express.raw({ type: [...allowedPhotoTypes.keys()], limit: '10mb' }),
+  (request, response) => {
+    const pending = pendingLocalUploads.get(request.params.uploadId);
+    if (!pending || pending.expiresAt <= Date.now()) {
+      pendingLocalUploads.delete(request.params.uploadId);
+      response.status(404).json({ error: 'Photo upload request expired. Try again.' });
+      return;
+    }
+    if (
+      request.headers['content-type'] !== pending.contentType
+      || !Buffer.isBuffer(request.body)
+    ) {
+      response.status(400).json({ error: 'The uploaded photo type is invalid.' });
+      return;
+    }
+
+    writeFileSync(path.join(uploadsDir, pending.filename), request.body);
+    pendingLocalUploads.delete(request.params.uploadId);
+    response.status(201).json({ uploaded: true });
+  }
+);
 
 app.put('/api/zones/:zoneId', requireAdmin, (request, response) => {
   const { zoneId } = request.params;
